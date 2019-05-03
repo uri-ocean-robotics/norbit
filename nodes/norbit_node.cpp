@@ -6,7 +6,13 @@
 #include <boost/asio.hpp>
 #include <boost/algorithm/string.hpp>
 
-#include "../include/norbit/s7k.h"
+#include <pcl_ros/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl_conversions/pcl_conversions.h>
+
+#include "../include/norbit/norbit_types/header.h"
+#include "../include/norbit/norbit_types/bathymetric_data.h"
+#include "../include/norbit/norbit_types/message.h"
 
 
 using namespace boost::asio;
@@ -17,22 +23,36 @@ using ip::tcp;
 class NorbitConnection{
 public:
   NorbitConnection();
+  void updateParams();
   void receive();
   void recHandler(
       const boost::system::error_code& error, // Result of operation.
       std::size_t bytes_transferred           // Number of bytes received.
     );
   void spin();
-private:
+  void bathyCallback(norbit_types::BathymetricData data);
+protected:
   std::unique_ptr<tcp::socket> socket_;
   boost::asio::io_service io_service_;
-  boost::array<char, sizeof(s7k::NetworkFrame)+sizeof(s7k::DataRecordFrameHead)> recv_buffer_;
+  boost::array<char, sizeof(norbit_types::Header)> recv_buffer_;
+  boost::array<char, 50000> dataBuffer_;
+  std::string sensor_frame_;
+  ros::NodeHandle * node_;
+  ros::Publisher detect_pub_;
 };
 
 NorbitConnection::NorbitConnection(){
   socket_ = std::unique_ptr<tcp::socket>(new tcp::socket(io_service_) );
-  socket_->connect(tcp::endpoint( boost::asio::ip::address::from_string("192.168.53.2"), 7000 ));
+  socket_->connect(tcp::endpoint( boost::asio::ip::address::from_string("192.168.53.24"), 2210 ));
+
+  node_ = new(ros::NodeHandle);
+  detect_pub_ = node_->advertise<pcl::PointCloud<pcl::PointXYZI>> ("detections", 1);
+  updateParams();
   receive();
+}
+
+void NorbitConnection::updateParams(){
+  node_->param<std::string>("sensor_frame",sensor_frame_,"multibeam");
 }
 
 void NorbitConnection::receive(){
@@ -40,36 +60,44 @@ void NorbitConnection::receive(){
   socket_->async_receive(boost::asio::buffer(recv_buffer_), 0,
                          boost::bind(&NorbitConnection::recHandler, this, boost::asio::placeholders::error,
                                      boost::asio::placeholders::bytes_transferred));
-  //std::cout<< "setup complete" << std::endl;
 }
 
 void NorbitConnection::recHandler(const boost::system::error_code &error, std::size_t bytes_transferred){
-  //std::cout<< "rec bytes: " << bytes_transferred << std::endl;
-  const s7k::NetworkFrame * s7k_data = reinterpret_cast<const s7k::NetworkFrame*>( &recv_buffer_ );
-  if(s7k_data->protocolVersion==5){
-    std::cout<< std::endl << "rec bytes: " << bytes_transferred << std::endl;
-    //std::cout << "size: " << sizeof(s7k::NetworkFrame) << std::endl;
-    std::cout << "protocol version: " << s7k_data->protocolVersion << std::endl;
-    std::cout << "Offset: " << s7k_data->offset << std::endl;
-    std::cout << "totalPackets: " << s7k_data->totalPackets << std::endl;
-    std::cout << "totalRecords: " << s7k_data->totalRecords << std::endl;
-    std::cout << "sequenceNumber: " << s7k_data->sequenceNumber << std::endl;
-    const s7k::DataRecordFrameHead * drf_data = reinterpret_cast<const s7k::DataRecordFrameHead*>( &recv_buffer_[sizeof(s7k::NetworkFrame)] );
-    std::cout << "drf_protocolVersion: " << drf_data->protocolVersion << std::endl;
-    if( drf_data->syncPattern == 0x0000FFFF ){
-      std::cout << "drf_syncPattern correct " << std::endl;
-    }else{
-      std::cout << "drf_syncPattern incorrect " << std::endl;;
+  norbit_types::Message msg;
+  if(msg.fromBoostArray(recv_buffer_)){
+    const unsigned int dataSize = msg.getHeader().size-sizeof(norbit_types::Header);
+    size_t bytesRead = read(*socket_,boost::asio::buffer(dataBuffer_,dataSize));
+    std::shared_ptr<char> dataPtr;
+    dataPtr.reset(new char[dataSize]);
+    memcpy(dataPtr.get(),&dataBuffer_,bytesRead);
+    msg.setBits(dataPtr);
+
+    if(msg.getHeader().type==norbit_types::bathy){
+      bathyCallback(msg.getBathy());
     }
-    std::cout << "drf_syncPattern: " << drf_data->syncPattern << std::endl;
-    std::cout << "drf size: " << drf_data->size <<std::endl;
-    std::cout << "drf recordTypeIdentifier: " << drf_data->recordTypeIdentifier <<std::endl;
-    std::cout << "totalRecordsInFragmentedData: " << drf_data->totalRecordsInFragmentedData <<std::endl;
-  }
-  else{
-    std::cout<< "rec bytes: " << bytes_transferred << std::endl;
   }
   receive();
+  return;
+}
+
+void NorbitConnection::bathyCallback(norbit_types::BathymetricData data){
+  pcl::PointCloud<pcl::PointXYZI>::Ptr detections (new pcl::PointCloud<pcl::PointXYZI>);
+  detections->header.frame_id = sensor_frame_;
+  ros::Time stamp(data.getHeader().time);
+
+  for(size_t i = 0; i<data.getHeader().N; i++){
+    if(data.getData(i).sample_number>1){
+      float range = float(data.getData(i).sample_number) * data.getHeader().snd_velocity/(2.0*data.getHeader().sample_rate);
+      pcl::PointXYZI p;
+      p.x=0;
+      p.y=range * sinf(data.getData(i).angle);;
+      p.z=range * cosf(data.getData(i).angle);
+      p.intensity=float(data.getData(i).intensity)/1e9f;
+      detections->push_back(p);
+    }
+  }
+  pcl_conversions::toPCL(stamp, detections->header.stamp);
+  detect_pub_.publish(detections);
   return;
 }
 
@@ -81,67 +109,9 @@ void NorbitConnection::spin(){
 
 int main(int argc, char* argv[])
 {
-  //ros::init(argc, argv, "norbit_node");
+  ros::init(argc, argv, "norbit_node");
   NorbitConnection con;
   con.spin();
 
 }
 
-
-////
-//// client.cpp
-//// ~~~~~~~~~~
-////
-//// Copyright (c) 2003-2013 Christopher M. Kohlhoff (chris at kohlhoff dot com)
-////
-//// Distributed under the Boost Software License, Version 1.0. (See accompanying
-//// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
-////
-
-//#include <iostream>
-//#include <boost/array.hpp>
-//#include <boost/asio.hpp>
-
-//using boost::asio::ip::tcp;
-
-//int main(int argc, char* argv[])
-//{
-//  try
-//  {
-//    if (argc != 2)
-//    {
-//      std::cerr << "Usage: client <host>" << std::endl;
-//      return 1;
-//    }
-
-//    boost::asio::io_service io_service;
-
-//    tcp::resolver resolver(io_service);
-//    tcp::resolver::query query(argv[1],"7000");
-//    tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
-
-//    tcp::socket socket(io_service);
-//    boost::asio::connect(socket, endpoint_iterator);
-
-//    for (;;)
-//    {
-//      boost::array<char, 128> buf;
-//      boost::system::error_code error;
-
-//      size_t len = socket.read_some(boost::asio::buffer(buf), error);
-
-//      if (error == boost::asio::error::eof)
-//        break; // Connection closed cleanly by peer.
-//      else if (error)
-//        throw boost::system::system_error(error); // Some other error.
-
-//      std::cout.write(buf.data(), len);
-//    }
-//  }
-//  catch (std::exception& e)
-//  {
-//    std::cerr << e.what() << std::endl;
-//  }
-
-//  return 0;
-//}

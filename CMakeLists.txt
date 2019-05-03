@@ -7,6 +7,12 @@ project(norbit)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
+  pcl_conversions
+  pcl_ros
+  tf2
+  tf2_ros
+  tf2_msgs
+  tf2_sensor_msgs
 )
 
 
@@ -25,6 +31,8 @@ file(GLOB SRCS
     "include/norbit/*.h"
     "include/norbit/*.cpp"
     "include/norbit/*.hpp"
+    "include/norbit/norbit_types/*.h"
+    "include/norbit/norbit_types/*.cpp"
 )
 
 ## Specify additional locations of header files

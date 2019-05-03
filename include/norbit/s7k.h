@@ -11,6 +11,9 @@ namespace s7k {
 using u8  = uint8_t;
 using u16 = uint16_t;
 using u32 = uint32_t;
+using u64 = uint64_t;
+
+using f32 = float;
 
 
 #pragma pack(push, 1)  // insert this to eliminiate automatic padding
@@ -33,7 +36,7 @@ struct DataRecordFrameHead{
   u32 size;            //!< Size in bytes of this record from the start of the Protocol version field to the end of the checksum field —including any embedded data
   u32 optionalDataOffset; //!< Offset in bytes to optional data field from start of record. Zero (0) bytes implies no optional data.
   u32 optionalDataIdentifier;
-  u8 s7kTime[10];     //!< Time tag indicating when data was produced
+  u8  s7kTime[10];     //!< Time tag indicating when data was produced
   u16 recordVersion;   //!< Currently 1
   u32 recordTypeIdentifier; //!< Identifier for record type of embedded data
   u32 deviceIdentifier;//!< Identifier of the device to which this data pertains
