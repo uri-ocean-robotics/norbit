@@ -44,5 +44,5 @@ include_directories(
 )
 
 add_executable(norbit_node nodes/norbit_node ${SRCS} ${UI_HDRS} )
-target_link_libraries (norbit_node ${catkin_LIBRARIES}  )
+target_link_libraries (norbit_node ${catkin_LIBRARIES} )
 

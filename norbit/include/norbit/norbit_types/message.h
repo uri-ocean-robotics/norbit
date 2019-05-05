@@ -19,7 +19,7 @@ class Message
     bool isValid(){return header_->isValid();}
     void setBits(std::shared_ptr<char> bits){
       switch (header_->type) {
-      case bathy:
+      case bathymetric:
           bathy_.setBits(bits);
         break;
       default:

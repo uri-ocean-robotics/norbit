@@ -23,6 +23,7 @@ struct ConnectionParams{
   int bathy_port;
   std::string sensor_frame;
   std::string pointcloud_topic;
+  std::string bathymetric_topic;
 };
 
 class NorbitConnection{
@@ -46,6 +47,7 @@ protected:
   ros::NodeHandle node_;
   ros::NodeHandle privateNode_;
   ros::Publisher detect_pub_;
+  ros::Publisher bathy_pub_;
 };
 
 NorbitConnection::NorbitConnection():
@@ -53,6 +55,7 @@ privateNode_("~")
 {
   updateParams();
   detect_pub_ = node_.advertise<pcl::PointCloud<pcl::PointXYZI>> (params_.pointcloud_topic, 1);
+  bathy_pub_  = node_.advertise<norbit_msgs::BathymetricStamped> (params_.bathymetric_topic,1);
   socket_ = std::unique_ptr<tcp::socket>(new tcp::socket(io_service_) );
   ROS_INFO("Connecting to norbit MBES at ip  : %s",params_.ip.c_str());
   ROS_INFO("  listening for bathy on port    : %i",params_.bathy_port);
@@ -66,6 +69,7 @@ void NorbitConnection::updateParams(){
   privateNode_.param<std::string>("ip",params_.ip,"192.168.53.24");
   privateNode_.param<int>("bathy_port",params_.bathy_port,2210);
   privateNode_.param<std::string>("pointcloud_topic",params_.pointcloud_topic,"detections");
+  privateNode_.param<std::string>("bathymetric_topic",params_.bathymetric_topic,"bathymetric");
 }
 
 void NorbitConnection::receive(){
@@ -85,7 +89,7 @@ void NorbitConnection::recHandler(const boost::system::error_code &error, std::s
     memcpy(dataPtr.get(),&dataBuffer_,bytesRead);
     msg.setBits(dataPtr);
 
-    if(msg.getHeader().type==norbit_types::bathy){
+    if(msg.getHeader().type==norbit_types::bathymetric){
       bathyCallback(msg.getBathy());
     }
   }
@@ -111,6 +115,7 @@ void NorbitConnection::bathyCallback(norbit_types::BathymetricData data){
   }
   pcl_conversions::toPCL(stamp, detections->header.stamp);
   detect_pub_.publish(detections);
+  bathy_pub_.publish(data.getRosMsg(params_.sensor_frame));
   return;
 }
 

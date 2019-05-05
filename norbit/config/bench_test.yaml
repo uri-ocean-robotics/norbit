@@ -1,4 +1,4 @@
 ip:                 "192.168.53.24"
 bathy_port:         2210
-sensor_frame:       "/norbit"
+sensor_frame:       "/multibeam"
 pointcloud_topic:   "/norbit/detections"

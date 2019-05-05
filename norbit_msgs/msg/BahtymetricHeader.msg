@@ -7,7 +7,16 @@ float64 time_net         # Timestamp Unix time as fract (send on network time)
 float32 ping_rate        # In Hz
 uint16  type             # Bathy data type (4)
 uint8   beam_dist_mode   # 1:512EA 2:256EA
+
+uint8 SONAR_MODE_FLS = 0
+uint8 SONAR_MODE_BATHY = 1
+uint8 SONAR_MODE_BATHY_AMP = 2
+uint8 SONAR_MODE_BF_PASSTHROUGH = 4
+uint8 SONAR_MODE_BATHY_EDGE_ENHANCE = 5
+uint8 SONAR_MODE_SUPER_RES_BATHY = 6
+
 uint8   sonar_mode       # see: sonar_mode_t
+
 uint16[4]  reserved1
 float32 tx_angle         # Tx elevation steering in radians
 float32 gain             # Intensity value gain
