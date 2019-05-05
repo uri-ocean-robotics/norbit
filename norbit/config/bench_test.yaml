@@ -1,0 +1,4 @@
+ip:                 "192.168.53.24"
+bathy_port:         2210
+sensor_frame:       "/norbit"
+pointcloud_topic:   "/norbit/detections"

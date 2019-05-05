@@ -1,0 +1,3 @@
+BahtymetricHeader header
+
+BathymetricPoint[] detections

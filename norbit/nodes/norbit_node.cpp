@@ -18,7 +18,12 @@
 using namespace boost::asio;
 using ip::tcp;
 
-
+struct ConnectionParams{
+  std::string ip;
+  int bathy_port;
+  std::string sensor_frame;
+  std::string pointcloud_topic;
+};
 
 class NorbitConnection{
 public:
@@ -36,23 +41,31 @@ protected:
   boost::asio::io_service io_service_;
   boost::array<char, sizeof(norbit_types::Header)> recv_buffer_;
   boost::array<char, 50000> dataBuffer_;
-  std::string sensor_frame_;
-  ros::NodeHandle * node_;
+  //std::string sensor_frame_;
+  ConnectionParams params_;
+  ros::NodeHandle node_;
+  ros::NodeHandle privateNode_;
   ros::Publisher detect_pub_;
 };
 
-NorbitConnection::NorbitConnection(){
-  socket_ = std::unique_ptr<tcp::socket>(new tcp::socket(io_service_) );
-  socket_->connect(tcp::endpoint( boost::asio::ip::address::from_string("192.168.53.24"), 2210 ));
-
-  node_ = new(ros::NodeHandle);
-  detect_pub_ = node_->advertise<pcl::PointCloud<pcl::PointXYZI>> ("detections", 1);
+NorbitConnection::NorbitConnection():
+privateNode_("~")
+{
   updateParams();
+  detect_pub_ = node_.advertise<pcl::PointCloud<pcl::PointXYZI>> (params_.pointcloud_topic, 1);
+  socket_ = std::unique_ptr<tcp::socket>(new tcp::socket(io_service_) );
+  ROS_INFO("Connecting to norbit MBES at ip  : %s",params_.ip.c_str());
+  ROS_INFO("  listening for bathy on port    : %i",params_.bathy_port);
+  socket_->connect(tcp::endpoint( boost::asio::ip::address::from_string(params_.ip), params_.bathy_port ));
+
   receive();
 }
 
 void NorbitConnection::updateParams(){
-  node_->param<std::string>("sensor_frame",sensor_frame_,"multibeam");
+  privateNode_.param<std::string>("sensor_frame",params_.sensor_frame,"/norbit/multibeam");
+  privateNode_.param<std::string>("ip",params_.ip,"192.168.53.24");
+  privateNode_.param<int>("bathy_port",params_.bathy_port,2210);
+  privateNode_.param<std::string>("pointcloud_topic",params_.pointcloud_topic,"detections");
 }
 
 void NorbitConnection::receive(){
@@ -82,7 +95,7 @@ void NorbitConnection::recHandler(const boost::system::error_code &error, std::s
 
 void NorbitConnection::bathyCallback(norbit_types::BathymetricData data){
   pcl::PointCloud<pcl::PointXYZI>::Ptr detections (new pcl::PointCloud<pcl::PointXYZI>);
-  detections->header.frame_id = sensor_frame_;
+  detections->header.frame_id = params_.sensor_frame;
   ros::Time stamp(data.getHeader().time);
 
   for(size_t i = 0; i<data.getHeader().N; i++){
@@ -103,7 +116,7 @@ void NorbitConnection::bathyCallback(norbit_types::BathymetricData data){
 
 void NorbitConnection::spin(){
   //io_service_.run();
-  while(true)
+  while(ros::ok())
     io_service_.run_one();
 }
 
