@@ -44,5 +44,6 @@ include_directories(
 )
 
 add_executable(norbit_node nodes/norbit_node ${SRCS} ${UI_HDRS} )
+add_dependencies(norbit_node norbit_msgs_generate_messages_cpp)
 target_link_libraries (norbit_node ${catkin_LIBRARIES} )
 
