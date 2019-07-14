@@ -106,9 +106,9 @@ void NorbitConnection::bathyCallback(norbit_types::BathymetricData data){
     if(data.getData(i).sample_number>1){
       float range = float(data.getData(i).sample_number) * data.getHeader().snd_velocity/(2.0*data.getHeader().sample_rate);
       pcl::PointXYZI p;
-      p.x=0;
-      p.y=range * sinf(data.getData(i).angle);;
-      p.z=range * cosf(data.getData(i).angle);
+      p.x = range * sinf(data.getHeader().tx_angle);
+      p.y = range * sinf(data.getData(i).angle);
+      p.z = range * cosf(data.getData(i).angle);
       p.intensity=float(data.getData(i).intensity)/1e9f;
       detections->push_back(p);
     }
