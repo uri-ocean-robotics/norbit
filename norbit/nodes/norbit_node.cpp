@@ -65,7 +65,7 @@ privateNode_("~")
 }
 
 void NorbitConnection::updateParams(){
-  privateNode_.param<std::string>("sensor_frame",params_.sensor_frame,"/norbit/multibeam");
+  privateNode_.param<std::string>("sensor_frame",params_.sensor_frame,"norbit");
   privateNode_.param<std::string>("ip",params_.ip,"192.168.53.24");
   privateNode_.param<int>("bathy_port",params_.bathy_port,2210);
   privateNode_.param<std::string>("pointcloud_topic",params_.pointcloud_topic,"detections");
