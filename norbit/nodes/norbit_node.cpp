@@ -110,7 +110,9 @@ void NorbitConnection::bathyCallback(norbit_types::BathymetricData data){
       p.y = range * sinf(data.getData(i).angle);
       p.z = range * cosf(data.getData(i).angle);
       p.intensity=float(data.getData(i).intensity)/1e9f;
-      detections->push_back(p);
+      if(data.getData(i).quality_flag == 3){
+        detections->push_back(p);
+      }
     }
   }
   pcl_conversions::toPCL(stamp, detections->header.stamp);
