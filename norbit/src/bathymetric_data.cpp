@@ -1,4 +1,4 @@
-#include "bathymetric_data.h"
+#include "norbit_types/bathymetric_data.h"
 namespace norbit_types {
   BathymetricData::BathymetricData()
   {
