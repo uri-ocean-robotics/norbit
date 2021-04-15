@@ -3,6 +3,6 @@
     <node name="norbit_node"
     pkg="norbit"
     type="norbit_node" output="screen">
-        <rosparam command="load" file="$(find pos)/config/norbit.yaml" />
+        <rosparam command="load" file="$(find norbit)/config/bench_test.yaml" />
     </node>
 </launch>
