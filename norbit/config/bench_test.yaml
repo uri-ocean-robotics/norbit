@@ -2,11 +2,12 @@ ip:                 "10.1.10.61"
 bathy_port:         2210
 sensor_frame:       "norbit"
 pointcloud_topic:   "/norbit/detections"
+cmd_timeout:   0.5
 startup_settings:
     set_power:      "1"
     set_gate_mode:  "1"
     set_range:      ".5 30"
-#    bad_setting:    "doh"
+    zbad_setting:    "doh"
 
 shutdown_settings:
     set_power:      "0"

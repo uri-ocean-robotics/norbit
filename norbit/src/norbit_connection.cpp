@@ -13,6 +13,7 @@ NorbitConnection::NorbitConnection() : privateNode_("~") {
       params_.bathymetric_topic, 1);
 
   setupConnections();
+  listenForCmd();
 
   for (auto param : params_.startup_settings) {
     sendCmd(param.first, param.second);
@@ -32,6 +33,7 @@ void NorbitConnection::updateParams() {
                                   "detections");
   privateNode_.param<std::string>("bathymetric_topic",
                                   params_.bathymetric_topic, "bathymetric");
+  privateNode_.getParam("cmd_timeout", params_.cmd_timeout);
   privateNode_.getParam("startup_settings", params_.startup_settings);
   privateNode_.getParam("shutdown_settings", params_.shutdown_settings);
 }
@@ -65,33 +67,51 @@ void NorbitConnection::sendCmd(const std::string &cmd, const std::string &val) {
   ROS_INFO("command message sent: %s", message.c_str());
   sockets_.cmd->send(boost::asio::buffer(message));
 
-  std::string line;
+  auto start_time = ros::WallTime::now();
+  ros::Duration timeout(.5);
+  bool running = true;
+  std::string last = "";
   do {
-    boost::asio::streambuf b;
-    boost::asio::read_until(*sockets_.cmd, b, "\r\n");
+    io_service_.run_one();
+    if (cmd_resp_queue_.size() > 0) {
+      last = cmd_resp_queue_.front();
+      if (cmd_resp_queue_.front().find(key) != std::string::npos) {
+        ROS_INFO("ACK Received: %s", cmd_resp_queue_.front().c_str());
+        cmd_resp_queue_.pop_front();
+        running = false;
+      } else {
+        cmd_resp_queue_.pop_front();
+      }
+    } else {
+      if (ros::WallTime::now().toSec() - start_time.toSec() >
+          params_.cmd_timeout) {
 
-    std::istream is(&b);
-    std::getline(is, line);
-    if (line.find(key) != std::string::npos) {
-      ROS_INFO("received reply: %s", line.c_str());
+        if (last != "") {
+          ROS_ERROR("[%s] received bad ACK: %s",
+                    ros::this_node::getName().c_str(), last.c_str());
+        } else {
+          ROS_ERROR("[%s] TIMEOUT -- no ACK received",
+                    ros::this_node::getName().c_str());
+        }
+        running = false;
+      }
     }
-  } while (line.find(key) == std::string::npos);
+  } while (running);
 }
 
 void NorbitConnection::listenForCmd() {
-  sockets_.cmd->async_receive(
-      boost::asio::buffer(cmd_resp_buffer_), 0,
-      boost::bind(&NorbitConnection::receiveCmd, this,
-                  boost::asio::placeholders::error,
-                  boost::asio::placeholders::bytes_transferred));
+
+  boost::asio::async_read_until(*sockets_.cmd, cmd_resp_buffer_, "\r\n",
+                                boost::bind(&NorbitConnection::receiveCmd, this,
+                                            boost::asio::placeholders::error));
 }
 
-void NorbitConnection::receiveCmd(const boost::system::error_code &error,
-                                  std::size_t bytes_transferred) {
-  std::cout << "Reply is: ";
-  std::cout.write(cmd_resp_buffer_, bytes_transferred);
-  std::cout << "\n";
-
+void NorbitConnection::receiveCmd(const boost::system::error_code &err) {
+  std::string line;
+  std::istream is(&cmd_resp_buffer_);
+  std::getline(is, line);
+  cmd_resp_queue_.push_back(line);
+  listenForCmd();
   return;
 }
 
@@ -156,6 +176,7 @@ void NorbitConnection::spin() {
   // io_service_.run();
   while (ros::ok()) {
     io_service_.run_one();
+    ros::spinOnce();
   }
 
   ROS_INFO("shutting down...");

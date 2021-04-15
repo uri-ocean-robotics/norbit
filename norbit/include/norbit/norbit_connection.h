@@ -8,6 +8,7 @@
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
 #include <chrono>
+#include <deque>
 #include <future>
 #include <iostream>
 #include <ros/ros.h>
@@ -30,6 +31,7 @@ struct ConnectionParams {
   std::string sensor_frame;
   std::string pointcloud_topic;
   std::string bathymetric_topic;
+  double cmd_timeout;
   std::map<std::string, std::string> startup_settings;
   std::map<std::string, std::string> shutdown_settings;
 };
@@ -42,8 +44,7 @@ public:
   void setupConnections();
   void sendCmd(std::string const &cmd, const std::string &val);
   void listenForCmd();
-  void receiveCmd(const boost::system::error_code &error,
-                  std::size_t bytes_transferred);
+  void receiveCmd(const boost::system::error_code &err);
   void receive();
   void
   recHandler(const boost::system::error_code &error, // Result of operation.
@@ -61,12 +62,13 @@ protected:
   boost::asio::io_service io_service_;
   boost::array<char, sizeof(norbit_types::Header)> recv_buffer_;
   boost::array<char, 50000> dataBuffer_;
-  char cmd_resp_buffer_[1024];
+  boost::asio::streambuf cmd_resp_buffer_;
   ConnectionParams params_;
   ros::NodeHandle node_;
   ros::NodeHandle privateNode_;
   ros::Publisher detect_pub_;
   ros::Publisher bathy_pub_;
+  std::deque<std::string> cmd_resp_queue_;
 };
 
 #endif // NORBIT_CONNECTION_H
