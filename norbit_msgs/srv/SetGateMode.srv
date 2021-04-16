@@ -1,0 +1,7 @@
+#set gate mode 0=Gate by range 1=Gate by depth 2=Gate by range and depth
+uint8   GATE    = 0
+uint8   GATE_BY_DEPTH   = 0
+uint8   GATE_BY_RANGE_AND_DEPTH   = 0
+uint8   mode
+---
+CmdResp resp

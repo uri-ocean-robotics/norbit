@@ -1,0 +1,8 @@
+#Set range for gate mode 0 and 1. Start and stop range / depth in meters
+#Set range for gate mode 2. Start and stop range (R0 – R1) and Start and stop depth (D0 -D1)
+float32   r_min
+float32   r_max
+float32   d_min
+float32   d_max
+---
+CmdResp resp

@@ -6,13 +6,10 @@ NorbitConnection::NorbitConnection() : privateNode_("~") {
   ROS_INFO("Connecting to norbit MBES at ip  : %s", params_.ip.c_str());
   ROS_INFO("  listening for bathy on port    : %i", params_.bathy_port);
 
-  detect_pub_ = node_.advertise<pcl::PointCloud<pcl::PointXYZI>>(
-      params_.pointcloud_topic, 1);
-
-  bathy_pub_ = node_.advertise<norbit_msgs::BathymetricStamped>(
-      params_.bathymetric_topic, 1);
+  setupPubSub();
 
   setupConnections();
+
   listenForCmd();
 
   for (auto param : params_.startup_settings) {
@@ -38,6 +35,23 @@ void NorbitConnection::updateParams() {
   privateNode_.getParam("shutdown_settings", params_.shutdown_settings);
 }
 
+void NorbitConnection::setupPubSub() {
+
+  // publishers
+  detect_pub_ = node_.advertise<pcl::PointCloud<pcl::PointXYZI>>(
+      params_.pointcloud_topic, 1);
+
+  bathy_pub_ = node_.advertise<norbit_msgs::BathymetricStamped>(
+      params_.bathymetric_topic, 1);
+
+  // SRVs
+  srv_map_["norbit_cmd"] = privateNode_.advertiseService(
+      "norbit_cmd", &NorbitConnection::norbitCmdCallback, this);
+
+  srv_map_["set_power"] = privateNode_.advertiseService(
+      "set_power", &NorbitConnection::setPowerCallback, this);
+}
+
 void NorbitConnection::setupConnections() {
   sockets_.bathymetric = std::unique_ptr<boost::asio::ip::tcp::socket>(
       new boost::asio::ip::tcp::socket(io_service_));
@@ -46,6 +60,7 @@ void NorbitConnection::setupConnections() {
 
   sockets_.cmd = std::unique_ptr<boost::asio::ip::tcp::socket>(
       new boost::asio::ip::tcp::socket(io_service_));
+
   sockets_.cmd->connect(boost::asio::ip::tcp::endpoint(
       boost::asio::ip::address::from_string(params_.ip), params_.cmd_port));
 }
@@ -57,10 +72,16 @@ void removeSubstrs(std::string &s, const std::string p) {
     s.erase(i, n);
 }
 
-void NorbitConnection::sendCmd(const std::string &cmd, const std::string &val) {
+norbit_msgs::CmdResp NorbitConnection::sendCmd(const std::string &cmd,
+                                               const std::string &val) {
+
+  norbit_msgs::CmdResp out;
 
   std::string message = cmd + " " + val;
   std::string key = cmd;
+
+  // some of the norbit reponses don't echo back set_<cmd> so we need to strip
+  // it
   removeSubstrs(key, "set_");
   removeSubstrs(key, " ");
 
@@ -68,16 +89,18 @@ void NorbitConnection::sendCmd(const std::string &cmd, const std::string &val) {
   sockets_.cmd->send(boost::asio::buffer(message));
 
   auto start_time = ros::WallTime::now();
-  ros::Duration timeout(.5);
+  ros::Duration timeout(params_.cmd_timeout);
   bool running = true;
-  std::string last = "";
+  out.success = false;
+  out.resp = "";
   do {
     io_service_.run_one();
     if (cmd_resp_queue_.size() > 0) {
-      last = cmd_resp_queue_.front();
+      out.resp = cmd_resp_queue_.front();
       if (cmd_resp_queue_.front().find(key) != std::string::npos) {
         ROS_INFO("ACK Received: %s", cmd_resp_queue_.front().c_str());
         cmd_resp_queue_.pop_front();
+        out.success = true;
         running = false;
       } else {
         cmd_resp_queue_.pop_front();
@@ -86,9 +109,9 @@ void NorbitConnection::sendCmd(const std::string &cmd, const std::string &val) {
       if (ros::WallTime::now().toSec() - start_time.toSec() >
           params_.cmd_timeout) {
 
-        if (last != "") {
+        if (out.resp != "") {
           ROS_ERROR("[%s] received bad ACK: %s",
-                    ros::this_node::getName().c_str(), last.c_str());
+                    ros::this_node::getName().c_str(), out.resp.c_str());
         } else {
           ROS_ERROR("[%s] TIMEOUT -- no ACK received",
                     ros::this_node::getName().c_str());
@@ -97,6 +120,8 @@ void NorbitConnection::sendCmd(const std::string &cmd, const std::string &val) {
       }
     }
   } while (running);
+
+  return out;
 }
 
 void NorbitConnection::listenForCmd() {
@@ -172,11 +197,25 @@ void NorbitConnection::bathyCallback(norbit_types::BathymetricData data) {
   return;
 }
 
+bool NorbitConnection::norbitCmdCallback(
+    norbit_msgs::NorbitCmd::Request &req,
+    norbit_msgs::NorbitCmd::Response &resp) {
+  resp.resp = sendCmd(req.cmd, req.val);
+  return resp.resp.success;
+}
+
+bool NorbitConnection::setPowerCallback(norbit_msgs::SetPower::Request &req,
+                                        norbit_msgs::SetPower::Response &resp) {
+  resp.resp = sendCmd("set_power", std::to_string(req.on));
+  return resp.resp.success;
+}
+
 void NorbitConnection::spin() {
-  // io_service_.run();
+  ros::Rate loop_rate(200.0);
   while (ros::ok()) {
-    io_service_.run_one();
+    io_service_.poll_one();
     ros::spinOnce();
+    loop_rate.sleep();
   }
 
   ROS_INFO("shutting down...");

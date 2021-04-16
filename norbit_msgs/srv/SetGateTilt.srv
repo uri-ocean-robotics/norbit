@@ -1,0 +1,4 @@
+#set gate tilt in degrees
+float32 tilt
+---
+CmdResp resp

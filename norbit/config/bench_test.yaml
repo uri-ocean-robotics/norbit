@@ -1,9 +1,10 @@
-ip:                 "10.1.10.61"
-bathy_port:         2210
-sensor_frame:       "norbit"
-pointcloud_topic:   "/norbit/detections"
-cmd_timeout:   0.5
-startup_settings:
+ip:                 "10.1.10.61"            # the IP addres of your norbit
+cmd_port:           2209                    # the port the norbit listens for commands. normally/default 2209
+bathy_port:         2210                    # the port which bathymetry is published. normally/default 2210
+sensor_frame:       "norbit"                # the TF frame of the norbit
+pointcloud_topic:   "/norbit/detections"    # the topic you want to send your pointclouds on
+cmd_timeout:        0.5                     # how long should you wait for a command response before you consider it timed out
+startup_settings:                           # the norbit settings to be applied at startup (see doc/*DFD_external.pdf)
     set_power:      "1"
     set_gate_mode:  "1"
     set_range:      ".5 30"

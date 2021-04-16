@@ -1,0 +1,4 @@
+# Set decimation factor before Match filter. Enables longer pulses by reducing sample rate.
+uint8   dec
+---
+CmdResp resp

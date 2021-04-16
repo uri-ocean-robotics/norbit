@@ -1,0 +1,7 @@
+uint8   SNIPPETS            = 0
+uint8   SIDESCAN            = 1
+uint8   CROPPED_SIDESCAN    = 9
+
+uint8   mode
+---
+CmdResp resp

@@ -17,6 +17,8 @@
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl_ros/point_cloud.h>
 
+#include "norbit_msgs/NorbitCmd.h"
+#include "norbit_msgs/SetPower.h"
 #include "norbit_types/bathymetric_data.h"
 #include "norbit_types/header.h"
 #include "norbit_types/message.h"
@@ -41,8 +43,9 @@ public:
   NorbitConnection();
   ~NorbitConnection();
   void updateParams();
+  void setupPubSub();
   void setupConnections();
-  void sendCmd(std::string const &cmd, const std::string &val);
+  norbit_msgs::CmdResp sendCmd(std::string const &cmd, const std::string &val);
   void listenForCmd();
   void receiveCmd(const boost::system::error_code &err);
   void receive();
@@ -50,15 +53,29 @@ public:
   recHandler(const boost::system::error_code &error, // Result of operation.
              std::size_t bytes_transferred // Number of bytes received.
   );
-  void spin();
+
+  // norbit TCP callbacks
   void bathyCallback(norbit_types::BathymetricData data);
-  void shutdown(int sig);
+
+  // ROS callbacks
+  bool norbitCmdCallback(norbit_msgs::NorbitCmd::Request &req,
+                         norbit_msgs::NorbitCmd::Response &resp);
+
+  bool setPowerCallback(norbit_msgs::SetPower::Request &req,
+                        norbit_msgs::SetPower::Response &resp);
+
+  // operations
+  void spin();
 
 protected:
   struct {
     std::unique_ptr<boost::asio::ip::tcp::socket> bathymetric;
     std::unique_ptr<boost::asio::ip::tcp::socket> cmd;
   } sockets_;
+  //  struct {
+  //    ros::ServiceServer norbit_cmd;
+  //  } srv_;
+  std::map<std::string, ros::ServiceServer> srv_map_;
   boost::asio::io_service io_service_;
   boost::array<char, sizeof(norbit_types::Header)> recv_buffer_;
   boost::array<char, 50000> dataBuffer_;

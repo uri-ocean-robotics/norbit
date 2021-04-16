@@ -1,0 +1,5 @@
+uint8   POWER_ON    = 1
+uint8   POWER_OFF   = 0
+uint8   on
+---
+CmdResp resp

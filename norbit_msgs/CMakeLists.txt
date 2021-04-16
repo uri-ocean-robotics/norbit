@@ -18,6 +18,18 @@ add_message_files(
   ${rosMsg}
   )
 
+FILE(GLOB rosSrvFiles RELATIVE "${${PROJECT_NAME}_SOURCE_DIR}/srv"
+    "${${PROJECT_NAME}_SOURCE_DIR}/srv/*.srv")
+
+FOREACH(rosSrv ${rosSrvFiles})
+    MESSAGE( STATUS "Processing Srv file: ${rosSrv}" )
+ENDFOREACH(rosMsg)
+
+add_service_files(
+  FILES
+  ${rosSrvFiles}
+)
+
 generate_messages(DEPENDENCIES std_msgs)
 
 catkin_package(CATKIN_DEPENDS message_runtime std_msgs)

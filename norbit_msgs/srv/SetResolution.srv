@@ -1,0 +1,7 @@
+#Set resolution of water-column data. First number, vertical resolution is an approximate value.
+#Exact value will depend on range is decimated down by a integer factor.
+#Second number, horizontal resolution needs to be a power of 2 (64-128-256,512).
+uint32   vres
+uint32   hres
+---
+CmdResp resp

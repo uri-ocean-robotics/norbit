@@ -1,0 +1,11 @@
+uint8   FORWARD             = 0
+uint8   BATHY               = 1
+uint8   BATHY_AMP           = 2
+uint8   BF_PASS_THROUGH     = 4
+uint8   EDGE_ENHANCE        = 5
+uint8   SUPER_RES           = 6
+uint8   MULTI_DETECT        = 7
+
+uint8   mode
+---
+CmdResp resp

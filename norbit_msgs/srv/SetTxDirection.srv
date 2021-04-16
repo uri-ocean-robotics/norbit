@@ -1,0 +1,4 @@
+# Sets center direction in degrees for STX
+float32   dir
+---
+CmdResp resp

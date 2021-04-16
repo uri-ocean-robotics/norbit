@@ -1,0 +1,4 @@
+# Sets number of beams for STX scan sequence.
+uint8   beam
+---
+CmdResp resp

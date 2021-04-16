@@ -1,0 +1,4 @@
+# Sets opening angle in degrees.
+float32 open
+---
+CmdResp resp
