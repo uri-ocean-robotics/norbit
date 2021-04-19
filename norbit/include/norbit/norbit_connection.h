@@ -65,6 +65,7 @@ public:
                         norbit_msgs::SetPower::Response &resp);
 
   // operations
+  void spin_once();
   void spin();
 
 protected:
@@ -86,6 +87,7 @@ protected:
   ros::Publisher detect_pub_;
   ros::Publisher bathy_pub_;
   std::deque<std::string> cmd_resp_queue_;
+  ros::Rate loop_rate;
 };
 
 #endif // NORBIT_CONNECTION_H

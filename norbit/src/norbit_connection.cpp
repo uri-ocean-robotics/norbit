@@ -1,6 +1,6 @@
 #include "norbit_connection.h"
 
-NorbitConnection::NorbitConnection() : privateNode_("~") {
+NorbitConnection::NorbitConnection() : privateNode_("~"), loop_rate(200.0) {
   updateParams();
 
   ROS_INFO("Connecting to norbit MBES at ip  : %s", params_.ip.c_str());
@@ -17,6 +17,8 @@ NorbitConnection::NorbitConnection() : privateNode_("~") {
   }
 
   receive();
+
+  //  loop_rate = ros::Rate(200.0);
 }
 
 NorbitConnection::~NorbitConnection() {}
@@ -94,7 +96,7 @@ norbit_msgs::CmdResp NorbitConnection::sendCmd(const std::string &cmd,
   out.success = false;
   out.resp = "";
   do {
-    io_service_.run_one();
+    spin_once();
     if (cmd_resp_queue_.size() > 0) {
       out.resp = cmd_resp_queue_.front();
       if (cmd_resp_queue_.front().find(key) != std::string::npos) {
@@ -210,12 +212,16 @@ bool NorbitConnection::setPowerCallback(norbit_msgs::SetPower::Request &req,
   return resp.resp.success;
 }
 
+void NorbitConnection::spin_once() {
+  io_service_.poll_one();
+  ros::spinOnce();
+  loop_rate.sleep();
+}
+
 void NorbitConnection::spin() {
-  ros::Rate loop_rate(200.0);
+
   while (ros::ok()) {
-    io_service_.poll_one();
-    ros::spinOnce();
-    loop_rate.sleep();
+    spin_once();
   }
 
   ROS_INFO("shutting down...");
