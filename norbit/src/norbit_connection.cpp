@@ -188,35 +188,35 @@ void NorbitConnection::receive() {
 void NorbitConnection::recHandler(const boost::system::error_code &error,
                                   std::size_t bytes_transferred) {
   disconnect_timer_.setPeriod(ros::Duration(1.0),true);
-  norbit_types::Message msg;
-  if (msg.fromBoostArray(recv_buffer_)) {
-    const unsigned int dataSize =
-        msg.commonHeader().size - sizeof(norbit_msgs::CommonHeader);
-    size_t bytesRead =
-        read(*sockets_.bathymetric, boost::asio::buffer(dataBuffer_, dataSize));
-    std::shared_ptr<char> dataPtr;
+  try {
+    norbit_types::Message msg;
+    if (msg.fromBoostArray(recv_buffer_)) {
+      const unsigned int dataSize =
+          msg.commonHeader().size - sizeof(norbit_msgs::CommonHeader);
+      size_t bytesRead =read(*sockets_.bathymetric,
+                             boost::asio::buffer(dataBuffer_, dataSize));
+      std::shared_ptr<char> dataPtr;
+      dataPtr.reset(new char[dataSize]);
+      memcpy(dataPtr.get(), &dataBuffer_, bytesRead);
 
-    dataPtr.reset(new char[dataSize]);
-    memcpy(dataPtr.get(), &dataBuffer_, bytesRead);
-
-    if(msg.setBits(dataPtr)){
-
-      if (msg.commonHeader().type == norbit_types::bathymetric) {
-        bathyCallback(msg.getBathy());
+      if(msg.setBits(dataPtr)){
+        if (msg.commonHeader().type == norbit_types::bathymetric) {
+          bathyCallback(msg.getBathy());
+        }
       }
-
+      else ROS_WARN("Message failed CRC check:  Ignoring");
     }else{
-      ROS_WARN("Message failed CRC check:  Ignoring");
+      if(msg.commonHeader().version==NORBIT_CURRENT_VERSION)
+        ROS_WARN("Invalid version detected expected %i, got %i",
+                 NORBIT_CURRENT_VERSION, msg.commonHeader().version);
+      if(msg.commonHeader().preable==norbit_msgs::CommonHeader::NORBIT_PREAMBLE_KEY)
+        ROS_WARN("Invalid header preable detected");
     }
 
-
-  }else{
-    if(msg.commonHeader().version==NORBIT_CURRENT_VERSION)
-      ROS_WARN("Invalid version detected expected %i, got %i",
-               NORBIT_CURRENT_VERSION, msg.commonHeader().version);
-    if(msg.commonHeader().preable==norbit_msgs::CommonHeader::NORBIT_PREAMBLE_KEY)
-      ROS_WARN("Invalid header preable detected");
+  } catch (...) {
+    ROS_ERROR("An unhandled exception occured in NorbitConnection::recHandler()");
   }
+
   receive();
   return;
 }
@@ -256,20 +256,6 @@ void NorbitConnection::disconnectTimerCallback(const ros::TimerEvent& event){
     waitForConnections();
     initializeSonarParams();
   }
-//  try {
-//    boost::asio::io_service io;
-//    boost::asio::ip::tcp::socket test_sock(io);
-//    test_sock.connect(boost::asio::ip::tcp::endpoint(
-//        boost::asio::ip::address::from_string(params_.ip), params_.cmd_port));
-//    test_sock.close();
-//    }
-//  catch (const boost::exception& ex) {
-//      std::string info = boost::diagnostic_information(ex);
-//      ROS_ERROR("Sonar disconnected: %s",info.c_str());
-//      closeConnections();
-//      waitForConnections();
-//      initializeSonarParams();
-//    }
   return;
 }
 
