@@ -8,17 +8,13 @@ NorbitConnection::NorbitConnection() : privateNode_("~"), loop_rate(200.0) {
 
   setupPubSub();
 
-  setupConnections();
+  waitForConnections();
 
   listenForCmd();
 
-  for (auto param : params_.startup_settings) {
-    sendCmd(param.first, param.second);
-  }
+  initializeSonarParams();
 
   receive();
-
-  //  loop_rate = ros::Rate(200.0);
 }
 
 NorbitConnection::~NorbitConnection() {}
@@ -52,19 +48,44 @@ void NorbitConnection::setupPubSub() {
 
   srv_map_["set_power"] = privateNode_.advertiseService(
       "set_power", &NorbitConnection::setPowerCallback, this);
+
+  // timers
+  disconnect_timer_ = privateNode_.createTimer(ros::Duration(1.0),
+                           &NorbitConnection::disconnectTimerCallback,
+                           this);
 }
 
-void NorbitConnection::setupConnections() {
-  sockets_.bathymetric = std::unique_ptr<boost::asio::ip::tcp::socket>(
-      new boost::asio::ip::tcp::socket(io_service_));
-  sockets_.bathymetric->connect(boost::asio::ip::tcp::endpoint(
-      boost::asio::ip::address::from_string(params_.ip), params_.bathy_port));
+void NorbitConnection::waitForConnections(){
+  while(!openConnections());
+}
 
-  sockets_.cmd = std::unique_ptr<boost::asio::ip::tcp::socket>(
-      new boost::asio::ip::tcp::socket(io_service_));
 
-  sockets_.cmd->connect(boost::asio::ip::tcp::endpoint(
-      boost::asio::ip::address::from_string(params_.ip), params_.cmd_port));
+bool NorbitConnection::openConnections() {
+  try {
+    sockets_.bathymetric = std::unique_ptr<boost::asio::ip::tcp::socket>(
+        new boost::asio::ip::tcp::socket(io_service_));
+    sockets_.bathymetric->connect(boost::asio::ip::tcp::endpoint(
+        boost::asio::ip::address::from_string(params_.ip), params_.bathy_port));
+
+    sockets_.cmd = std::unique_ptr<boost::asio::ip::tcp::socket>(
+        new boost::asio::ip::tcp::socket(io_service_));
+
+    sockets_.cmd->connect(boost::asio::ip::tcp::endpoint(
+        boost::asio::ip::address::from_string(params_.ip), params_.cmd_port));
+    return true;
+  }
+  catch (const boost::exception& ex) {
+      std::string info = boost::diagnostic_information(ex);
+      ROS_ERROR("unable to connect to sonar: %s",info.c_str());
+      return false;
+  }
+}
+
+void NorbitConnection::closeConnections() {
+  sockets_.bathymetric->close();
+  sockets_.bathymetric.reset();
+  sockets_.cmd->close();
+  sockets_.cmd.reset();
 }
 
 void removeSubstrs(std::string &s, const std::string p) {
@@ -72,6 +93,15 @@ void removeSubstrs(std::string &s, const std::string p) {
   for (std::string::size_type i = s.find(p); i != std::string::npos;
        i = s.find(p))
     s.erase(i, n);
+}
+
+void NorbitConnection::initializeSonarParams(){
+  for (auto param : params_.startup_settings) {
+    while(!sendCmd(param.first, param.second).ack){
+      ros::Duration timeout(params_.cmd_timeout);
+      timeout.sleep();
+    }
+  }
 }
 
 norbit_msgs::CmdResp NorbitConnection::sendCmd(const std::string &cmd,
@@ -94,6 +124,7 @@ norbit_msgs::CmdResp NorbitConnection::sendCmd(const std::string &cmd,
   ros::Duration timeout(params_.cmd_timeout);
   bool running = true;
   out.success = false;
+  out.ack = false;
   out.resp = "";
   do {
     spin_once();
@@ -103,6 +134,7 @@ norbit_msgs::CmdResp NorbitConnection::sendCmd(const std::string &cmd,
         ROS_INFO("ACK Received: %s", cmd_resp_queue_.front().c_str());
         cmd_resp_queue_.pop_front();
         out.success = true;
+        out.ack = true;
         running = false;
       } else {
         cmd_resp_queue_.pop_front();
@@ -114,9 +146,11 @@ norbit_msgs::CmdResp NorbitConnection::sendCmd(const std::string &cmd,
         if (out.resp != "") {
           ROS_ERROR("[%s] received bad ACK: %s",
                     ros::this_node::getName().c_str(), out.resp.c_str());
+          out.ack = true;
         } else {
           ROS_ERROR("[%s] TIMEOUT -- no ACK received",
                     ros::this_node::getName().c_str());
+          out.ack = false;
         }
         running = false;
       }
@@ -153,6 +187,7 @@ void NorbitConnection::receive() {
 
 void NorbitConnection::recHandler(const boost::system::error_code &error,
                                   std::size_t bytes_transferred) {
+  disconnect_timer_.setPeriod(ros::Duration(1.0),true);
   norbit_types::Message msg;
   if (msg.fromBoostArray(recv_buffer_)) {
     const unsigned int dataSize =
@@ -199,11 +234,36 @@ void NorbitConnection::bathyCallback(norbit_types::BathymetricData data) {
   return;
 }
 
+void NorbitConnection::disconnectTimerCallback(const ros::TimerEvent& event){
+  ROS_INFO("No Messages received for a while.   Checking Connections");
+  if(!sendCmd("set_power", "").ack){
+    ROS_ERROR("Sonar disconnected: restarting connections");
+    closeConnections();
+    waitForConnections();
+    initializeSonarParams();
+  }
+//  try {
+//    boost::asio::io_service io;
+//    boost::asio::ip::tcp::socket test_sock(io);
+//    test_sock.connect(boost::asio::ip::tcp::endpoint(
+//        boost::asio::ip::address::from_string(params_.ip), params_.cmd_port));
+//    test_sock.close();
+//    }
+//  catch (const boost::exception& ex) {
+//      std::string info = boost::diagnostic_information(ex);
+//      ROS_ERROR("Sonar disconnected: %s",info.c_str());
+//      closeConnections();
+//      waitForConnections();
+//      initializeSonarParams();
+//    }
+  return;
+}
+
 bool NorbitConnection::norbitCmdCallback(
     norbit_msgs::NorbitCmd::Request &req,
     norbit_msgs::NorbitCmd::Response &resp) {
   resp.resp = sendCmd(req.cmd, req.val);
-  return resp.resp.success;
+  return resp.resp.ack;
 }
 
 bool NorbitConnection::setPowerCallback(norbit_msgs::SetPower::Request &req,

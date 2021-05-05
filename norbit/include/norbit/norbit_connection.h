@@ -12,6 +12,7 @@
 #include <future>
 #include <iostream>
 #include <ros/ros.h>
+#include <boost/exception/diagnostic_information.hpp>
 
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
@@ -44,7 +45,10 @@ public:
   ~NorbitConnection();
   void updateParams();
   void setupPubSub();
-  void setupConnections();
+  void waitForConnections();
+  bool openConnections();
+  void closeConnections();
+  void initializeSonarParams();
   norbit_msgs::CmdResp sendCmd(std::string const &cmd, const std::string &val);
   void listenForCmd();
   void receiveCmd(const boost::system::error_code &err);
@@ -58,6 +62,8 @@ public:
   void bathyCallback(norbit_types::BathymetricData data);
 
   // ROS callbacks
+  void disconnectTimerCallback(const ros::TimerEvent& event);
+
   bool norbitCmdCallback(norbit_msgs::NorbitCmd::Request &req,
                          norbit_msgs::NorbitCmd::Response &resp);
 
@@ -73,9 +79,6 @@ protected:
     std::unique_ptr<boost::asio::ip::tcp::socket> bathymetric;
     std::unique_ptr<boost::asio::ip::tcp::socket> cmd;
   } sockets_;
-  //  struct {
-  //    ros::ServiceServer norbit_cmd;
-  //  } srv_;
   std::map<std::string, ros::ServiceServer> srv_map_;
   boost::asio::io_service io_service_;
   boost::array<char, sizeof(norbit_types::Header)> recv_buffer_;
@@ -88,6 +91,7 @@ protected:
   ros::Publisher bathy_pub_;
   std::deque<std::string> cmd_resp_queue_;
   ros::Rate loop_rate;
+  ros::Timer disconnect_timer_;
 };
 
 #endif // NORBIT_CONNECTION_H
