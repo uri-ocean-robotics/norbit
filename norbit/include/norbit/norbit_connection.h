@@ -20,8 +20,6 @@
 
 #include "norbit_msgs/NorbitCmd.h"
 #include "norbit_msgs/SetPower.h"
-#include "norbit_types/bathymetric_data.h"
-#include "norbit_types/header.h"
 #include "norbit_types/message.h"
 
 // using namespace boost::asio;
@@ -81,7 +79,7 @@ protected:
   } sockets_;
   std::map<std::string, ros::ServiceServer> srv_map_;
   boost::asio::io_service io_service_;
-  boost::array<char, sizeof(norbit_types::Header)> recv_buffer_;
+  boost::array<char, sizeof(norbit_msgs::CommonHeader)> recv_buffer_;
   boost::array<char, 50000> dataBuffer_;
   boost::asio::streambuf cmd_resp_buffer_;
   ConnectionParams params_;

@@ -191,17 +191,31 @@ void NorbitConnection::recHandler(const boost::system::error_code &error,
   norbit_types::Message msg;
   if (msg.fromBoostArray(recv_buffer_)) {
     const unsigned int dataSize =
-        msg.getHeader().size - sizeof(norbit_types::Header);
+        msg.commonHeader().size - sizeof(norbit_msgs::CommonHeader);
     size_t bytesRead =
         read(*sockets_.bathymetric, boost::asio::buffer(dataBuffer_, dataSize));
     std::shared_ptr<char> dataPtr;
+
     dataPtr.reset(new char[dataSize]);
     memcpy(dataPtr.get(), &dataBuffer_, bytesRead);
-    msg.setBits(dataPtr);
 
-    if (msg.getHeader().type == norbit_types::bathymetric) {
-      bathyCallback(msg.getBathy());
+    if(msg.setBits(dataPtr)){
+
+      if (msg.commonHeader().type == norbit_types::bathymetric) {
+        bathyCallback(msg.getBathy());
+      }
+
+    }else{
+      ROS_WARN("Message failed CRC check:  Ignoring");
     }
+
+
+  }else{
+    if(msg.commonHeader().version==NORBIT_CURRENT_VERSION)
+      ROS_WARN("Invalid version detected expected %i, got %i",
+               NORBIT_CURRENT_VERSION, msg.commonHeader().version);
+    if(msg.commonHeader().preable==norbit_msgs::CommonHeader::NORBIT_PREAMBLE_KEY)
+      ROS_WARN("Invalid header preable detected");
   }
   receive();
   return;
@@ -211,19 +225,19 @@ void NorbitConnection::bathyCallback(norbit_types::BathymetricData data) {
   pcl::PointCloud<pcl::PointXYZI>::Ptr detections(
       new pcl::PointCloud<pcl::PointXYZI>);
   detections->header.frame_id = params_.sensor_frame;
-  ros::Time stamp(data.getHeader().time);
+  ros::Time stamp(data.bathymetricHeader().time);
 
-  for (size_t i = 0; i < data.getHeader().N; i++) {
-    if (data.getData(i).sample_number > 1) {
-      float range = float(data.getData(i).sample_number) *
-                    data.getHeader().snd_velocity /
-                    (2.0 * data.getHeader().sample_rate);
+  for (size_t i = 0; i < data.bathymetricHeader().N; i++) {
+    if (data.data(i).sample_number > 1) {
+      float range = float(data.data(i).sample_number) *
+                    data.bathymetricHeader().snd_velocity /
+                    (2.0 * data.bathymetricHeader().sample_rate);
       pcl::PointXYZI p;
-      p.x = range * sinf(data.getHeader().tx_angle);
-      p.y = range * sinf(data.getData(i).angle);
-      p.z = range * cosf(data.getData(i).angle);
-      p.intensity = float(data.getData(i).intensity) / 1e9f;
-      if (data.getData(i).quality_flag == 3) {
+      p.x = range * sinf(data.bathymetricHeader().tx_angle);
+      p.y = range * sinf(data.data(i).angle);
+      p.z = range * cosf(data.data(i).angle);
+      p.intensity = float(data.data(i).intensity) / 1e9f;
+      if (data.data(i).quality_flag == 3) {
         detections->push_back(p);
       }
     }

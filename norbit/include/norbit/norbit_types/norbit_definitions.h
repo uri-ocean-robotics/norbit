@@ -6,7 +6,7 @@
 #include <boost/array.hpp>
 
 
-#define NORBIT_PREAMBLE_KEY 0xDEADBEEF
+//#define NORBIT_PREAMBLE_KEY 0xDEADBEEF
 #define NORBIT_CURRENT_VERSION 4
 
 namespace norbit_types {

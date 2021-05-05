@@ -10,14 +10,17 @@ namespace norbit_types {
   {
   public:
     BathymetricData();
-    void setBits(std::shared_ptr<char> bits);
-    norbit_msgs::BahtymetricHeader & getHeader(){return *header_;}
-    norbit_msgs::BathymetricPoint & getData(size_t i){return data_[i];}
+    void setBits(std::shared_ptr<norbit_msgs::CommonHeader> comm_hdr, std::shared_ptr<char> bits);
+    norbit_msgs::BahtymetricHeader & bathymetricHeader(){return *bahtymetric_header_;}
+    norbit_msgs::BathymetricPoint & data(size_t i){return data_[i];}
     norbit_msgs::BathymetricStamped getRosMsg(std::string frame_id);
   protected:
-    norbit_msgs::BahtymetricHeader * header_;
-    norbit_msgs::BathymetricPoint * data_;
+    std::shared_ptr<norbit_msgs::CommonHeader> comm_hdr_;
+
     std::shared_ptr<char> bits_;
+    norbit_msgs::BahtymetricHeader * bahtymetric_header_;
+    norbit_msgs::BathymetricPoint * data_;
+
   };
 }
 #endif // BATHYMETRIC_DATA_H
