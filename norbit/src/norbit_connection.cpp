@@ -121,7 +121,6 @@ norbit_msgs::CmdResp NorbitConnection::sendCmd(const std::string &cmd,
   sockets_.cmd->send(boost::asio::buffer(message));
 
   auto start_time = ros::WallTime::now();
-  ros::Duration timeout(params_.cmd_timeout);
   bool running = true;
   out.success = false;
   out.ack = false;
