@@ -72,6 +72,9 @@ public:
   void spin_once();
   void spin();
 
+  static void shutdown(){shutdown_=true;}
+  static bool shutdown_;
+
 protected:
   struct {
     std::unique_ptr<boost::asio::ip::tcp::socket> bathymetric;

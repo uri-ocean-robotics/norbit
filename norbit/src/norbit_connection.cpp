@@ -1,5 +1,7 @@
 #include "norbit_connection.h"
 
+bool NorbitConnection::shutdown_ = false;
+
 NorbitConnection::NorbitConnection() : privateNode_("~"), loop_rate(200.0) {
   updateParams();
 
@@ -236,7 +238,7 @@ void NorbitConnection::bathyCallback(norbit_types::BathymetricData data) {
       p.y = range * sinf(data.data(i).angle);
       p.z = range * cosf(data.data(i).angle);
       p.intensity = float(data.data(i).intensity) / 1e9f;
-      if (data.data(i).quality_flag == 3) {
+      if ( data.data(i).quality_flag == 3) {
         detections->push_back(p);
       }
     }
@@ -279,12 +281,17 @@ void NorbitConnection::spin_once() {
 
 void NorbitConnection::spin() {
 
-  while (ros::ok()) {
+  do {
     spin_once();
-  }
+    if(shutdown_){
+      ROS_WARN("[%s] shutting down:  executing shutdown parameters",ros::this_node::getName().c_str());
+      for (auto param : params_.shutdown_settings) {
+        sendCmd(param.first, param.second);
+        ros::shutdown();
+      }
+    }
+  }while (!shutdown_);
 
-  ROS_INFO("shutting down...");
-  for (auto param : params_.shutdown_settings) {
-    sendCmd(param.first, param.second);
-  }
+
+
 }
