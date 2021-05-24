@@ -25,11 +25,16 @@ void NorbitConnection::updateParams() {
                                   "norbit");
   privateNode_.param<std::string>("ip", params_.ip, "192.168.53.24");
   privateNode_.param<int>("bathy_port", params_.bathy_port, 2210);
+  privateNode_.param<int>("water_column_port", params_.water_column_port, 2211);
   privateNode_.param<int>("cmd_port", params_.cmd_port, 2209);
   privateNode_.param<std::string>("pointcloud_topic", params_.pointcloud_topic,
                                   "detections");
   privateNode_.param<std::string>("bathymetric_topic",
                                   params_.bathymetric_topic, "bathymetric");
+
+  privateNode_.param<std::string>("water_column_topic",
+                                  params_.water_column_topic, "water_column");
+
   privateNode_.getParam("cmd_timeout", params_.cmd_timeout);
   privateNode_.getParam("startup_settings", params_.startup_settings);
   privateNode_.getParam("shutdown_settings", params_.shutdown_settings);
@@ -43,6 +48,9 @@ void NorbitConnection::setupPubSub() {
 
   bathy_pub_ = node_.advertise<norbit_msgs::BathymetricStamped>(
       params_.bathymetric_topic, 1);
+
+  wc_pub_ = node_.advertise<norbit_msgs::WaterColumnStamped>(
+      params_.water_column_topic, 1);
 
   // SRVs
   srv_map_["norbit_cmd"] = privateNode_.advertiseService(
@@ -66,8 +74,15 @@ bool NorbitConnection::openConnections() {
   try {
     sockets_.bathymetric = std::unique_ptr<boost::asio::ip::tcp::socket>(
         new boost::asio::ip::tcp::socket(io_service_));
+
     sockets_.bathymetric->connect(boost::asio::ip::tcp::endpoint(
         boost::asio::ip::address::from_string(params_.ip), params_.bathy_port));
+
+    sockets_.water_column = std::unique_ptr<boost::asio::ip::tcp::socket>(
+        new boost::asio::ip::tcp::socket(io_service_));
+
+    sockets_.water_column->connect(boost::asio::ip::tcp::endpoint(
+        boost::asio::ip::address::from_string(params_.ip), params_.water_column_port));
 
     sockets_.cmd = std::unique_ptr<boost::asio::ip::tcp::socket>(
         new boost::asio::ip::tcp::socket(io_service_));
@@ -86,6 +101,8 @@ bool NorbitConnection::openConnections() {
 void NorbitConnection::closeConnections() {
   sockets_.bathymetric->close();
   sockets_.bathymetric.reset();
+  sockets_.water_column->close();
+  sockets_.water_column.reset();
   sockets_.cmd->close();
   sockets_.cmd.reset();
 }
@@ -184,6 +201,12 @@ void NorbitConnection::receive() {
       boost::bind(&NorbitConnection::recHandler, this,
                   boost::asio::placeholders::error,
                   boost::asio::placeholders::bytes_transferred));
+
+  sockets_.water_column->async_receive(
+      boost::asio::buffer(recv_buffer_), 0,
+      boost::bind(&NorbitConnection::recHandler, this,
+                  boost::asio::placeholders::error,
+                  boost::asio::placeholders::bytes_transferred));
 }
 
 void NorbitConnection::recHandler(const boost::system::error_code &error,
@@ -203,6 +226,9 @@ void NorbitConnection::recHandler(const boost::system::error_code &error,
       if(msg.setBits(dataPtr)){
         if (msg.commonHeader().type == norbit_types::bathymetric) {
           bathyCallback(msg.getBathy());
+        }
+        if (msg.commonHeader().type == norbit_types::watercolum){
+          wcCallback(msg.getWC());
         }
       }
       else ROS_WARN("Message failed CRC check:  Ignoring");
@@ -247,6 +273,10 @@ void NorbitConnection::bathyCallback(norbit_types::BathymetricData data) {
   detect_pub_.publish(detections);
   bathy_pub_.publish(data.getRosMsg(params_.sensor_frame));
   return;
+}
+
+void NorbitConnection::wcCallback(norbit_types::WaterColumnData data){
+  wc_pub_.publish(data.getRosMsg(params_.sensor_frame));
 }
 
 void NorbitConnection::disconnectTimerCallback(const ros::TimerEvent& event){

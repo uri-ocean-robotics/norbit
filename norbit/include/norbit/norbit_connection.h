@@ -28,10 +28,12 @@
 struct ConnectionParams {
   std::string ip;
   int bathy_port;
+  int water_column_port;
   int cmd_port;
   std::string sensor_frame;
   std::string pointcloud_topic;
   std::string bathymetric_topic;
+  std::string water_column_topic;
   double cmd_timeout;
   std::map<std::string, std::string> startup_settings;
   std::map<std::string, std::string> shutdown_settings;
@@ -58,6 +60,7 @@ public:
 
   // norbit TCP callbacks
   void bathyCallback(norbit_types::BathymetricData data);
+  void wcCallback(norbit_types::WaterColumnData data);
 
   // ROS callbacks
   void disconnectTimerCallback(const ros::TimerEvent& event);
@@ -78,6 +81,7 @@ public:
 protected:
   struct {
     std::unique_ptr<boost::asio::ip::tcp::socket> bathymetric;
+    std::unique_ptr<boost::asio::ip::tcp::socket> water_column;
     std::unique_ptr<boost::asio::ip::tcp::socket> cmd;
   } sockets_;
   std::map<std::string, ros::ServiceServer> srv_map_;
@@ -90,6 +94,7 @@ protected:
   ros::NodeHandle privateNode_;
   ros::Publisher detect_pub_;
   ros::Publisher bathy_pub_;
+  ros::Publisher wc_pub_;
   std::deque<std::string> cmd_resp_queue_;
   ros::Rate loop_rate;
   ros::Timer disconnect_timer_;

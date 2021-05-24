@@ -5,6 +5,7 @@
 #include <cstring>
 //#include "header.h"
 #include "bathymetric_data.h"
+#include <norbit/norbit_types/water_column_data.h>
 #include <norbit_msgs/CommonHeader.h>
 #include "CRC.h"
 namespace norbit_types {
@@ -27,7 +28,10 @@ class Message
       if(msgValid()){
         switch (header_->type) {
         case bathymetric:
-            bathy_.setBits(header_,bits);
+          bathy_.setBits(header_,bits);
+          break;
+        case watercolum:
+          water_column_.setBits(header_,bits);
           break;
         default:
             std::cerr << "unable to read data:  unknown/undefined type"  << std::endl;
@@ -43,11 +47,13 @@ class Message
       return  crc==header_->crc;
     }
     BathymetricData getBathy(){return bathy_;}
+    WaterColumnData getWC(){return water_column_;}
 
   protected:
     std::shared_ptr<char> bits_;
     std::shared_ptr<norbit_msgs::CommonHeader> header_;
     BathymetricData bathy_;
+    WaterColumnData water_column_;
 
   };
 }
