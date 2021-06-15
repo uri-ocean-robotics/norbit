@@ -16,7 +16,9 @@ NorbitConnection::NorbitConnection() : privateNode_("~"), loop_rate(200.0) {
 
   initializeSonarParams();
 
-  receive();
+  receiveWC();
+
+  receiveBathy();
 }
 
 NorbitConnection::~NorbitConnection() {}
@@ -67,16 +69,17 @@ void NorbitConnection::setupPubSub() {
 
 void NorbitConnection::waitForConnections(){
   while(!openConnections());
+  ROS_INFO("Connection Estabilished");
 }
 
 
 bool NorbitConnection::openConnections() {
   try {
-//    sockets_.bathymetric = std::unique_ptr<boost::asio::ip::tcp::socket>(
-//        new boost::asio::ip::tcp::socket(io_service_));
+    sockets_.bathymetric = std::unique_ptr<boost::asio::ip::tcp::socket>(
+        new boost::asio::ip::tcp::socket(io_service_));
 
-//    sockets_.bathymetric->connect(boost::asio::ip::tcp::endpoint(
-//        boost::asio::ip::address::from_string(params_.ip), params_.bathy_port));
+    sockets_.bathymetric->connect(boost::asio::ip::tcp::endpoint(
+        boost::asio::ip::address::from_string(params_.ip), params_.bathy_port));
 
     sockets_.water_column = std::unique_ptr<boost::asio::ip::tcp::socket>(
         new boost::asio::ip::tcp::socket(io_service_));
@@ -99,8 +102,8 @@ bool NorbitConnection::openConnections() {
 }
 
 void NorbitConnection::closeConnections() {
-//  sockets_.bathymetric->close();
-//  sockets_.bathymetric.reset();
+  sockets_.bathymetric->close();
+  sockets_.bathymetric.reset();
   sockets_.water_column->close();
   sockets_.water_column.reset();
   sockets_.cmd->close();
@@ -194,44 +197,61 @@ void NorbitConnection::receiveCmd(const boost::system::error_code &err) {
   return;
 }
 
-void NorbitConnection::receive() {
-  recv_buffer_.assign(0);
-//  sockets_.bathymetric->async_receive(
-//      boost::asio::buffer(recv_buffer_), 0,
-//      boost::bind(&NorbitConnection::recHandler, this,
-//                  boost::asio::placeholders::error,
-//                  boost::asio::placeholders::bytes_transferred));
+void NorbitConnection::receiveWC() {
+  hdr_buff_.water_column.assign(0);
 
   sockets_.water_column->async_receive(
-      boost::asio::buffer(recv_buffer_), 0,
-      boost::bind(&NorbitConnection::recHandler, this,
+      boost::asio::buffer(hdr_buff_.water_column), 0,
+      boost::bind(&NorbitConnection::wcHandler, this,
                   boost::asio::placeholders::error,
                   boost::asio::placeholders::bytes_transferred));
 }
 
-void NorbitConnection::recHandler(const boost::system::error_code &error,
+void NorbitConnection::wcHandler(const boost::system::error_code &error,
                                   std::size_t bytes_transferred) {
+
+  processHdrMsg(*sockets_.water_column,hdr_buff_.water_column);
+  receiveWC();
+  return;
+}
+
+void NorbitConnection::receiveBathy() {
+  hdr_buff_.bathymetric.assign(0);
+  sockets_.bathymetric->async_receive(
+      boost::asio::buffer(hdr_buff_.bathymetric), 0,
+      boost::bind(&NorbitConnection::bathyHandler, this,
+                  boost::asio::placeholders::error,
+                  boost::asio::placeholders::bytes_transferred));
+}
+
+void NorbitConnection::bathyHandler(const boost::system::error_code &error,
+                                  std::size_t bytes_transferred) {
+
+  processHdrMsg(*sockets_.bathymetric,hdr_buff_.bathymetric);
+  receiveBathy();
+  return;
+}
+
+void NorbitConnection::processHdrMsg(boost::asio::ip::tcp::socket & sock, boost::array<char, sizeof(norbit_msgs::CommonHeader)> &hdr){
   disconnect_timer_.setPeriod(ros::Duration(1.0),true);
   try {
     norbit_types::Message msg;
-    if (msg.fromBoostArray(recv_buffer_)) {
-      const unsigned int dataSize =
-          msg.commonHeader().size - sizeof(norbit_msgs::CommonHeader);
-      size_t bytesRead =read(*sockets_.water_column,
-                             boost::asio::buffer(dataBuffer_, dataSize));
+    if (msg.fromBoostArray(hdr)) {
+      const unsigned int dataSize = msg.commonHeader().size - sizeof(norbit_msgs::CommonHeader);
       std::shared_ptr<char> dataPtr;
       dataPtr.reset(new char[dataSize]);
-      memcpy(dataPtr.get(), &dataBuffer_, bytesRead);
+      size_t bytesRead =read(sock,boost::asio::buffer(dataPtr.get(), dataSize));
 
       if(msg.setBits(dataPtr)){
         if (msg.commonHeader().type == norbit_types::bathymetric) {
           bathyCallback(msg.getBathy());
         }
         if (msg.commonHeader().type == norbit_types::watercolum){
-          wcCallback(msg.getWC());
+           wcCallback(msg.getWC());
         }
       }
-      else ROS_WARN("Message failed CRC check:  Ignoring");
+      else ROS_WARN("Watercolumn Message failed CRC check:  Ignoring");
+
     }else{
       if(msg.commonHeader().version!=NORBIT_CURRENT_VERSION)
         ROS_WARN("Invalid version detected expected %i, got %i",
@@ -243,10 +263,9 @@ void NorbitConnection::recHandler(const boost::system::error_code &error,
   } catch (...) {
     ROS_ERROR("An unhandled exception occured in NorbitConnection::recHandler()");
   }
-
-  receive();
-  return;
 }
+
+
 
 void NorbitConnection::bathyCallback(norbit_types::BathymetricData data) {
   pcl::PointCloud<pcl::PointXYZI>::Ptr detections(

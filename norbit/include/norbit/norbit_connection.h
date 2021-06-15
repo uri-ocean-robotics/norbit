@@ -52,10 +52,18 @@ public:
   norbit_msgs::CmdResp sendCmd(std::string const &cmd, const std::string &val);
   void listenForCmd();
   void receiveCmd(const boost::system::error_code &err);
-  void receive();
-  void recHandler(const boost::system::error_code &error, // Result of operation.
+
+  void receiveWC();
+  void wcHandler(const boost::system::error_code &error, // Result of operation.
              std::size_t bytes_transferred // Number of bytes received.
   );
+
+  void receiveBathy();
+  void bathyHandler(const boost::system::error_code &error, // Result of operation.
+             std::size_t bytes_transferred // Number of bytes received.
+  );
+
+  void processHdrMsg(boost::asio::ip::tcp::socket &sock, boost::array<char, sizeof(norbit_msgs::CommonHeader)> & hdr);
 
   // norbit TCP callbacks
   void bathyCallback(norbit_types::BathymetricData data);
@@ -83,10 +91,12 @@ protected:
     std::unique_ptr<boost::asio::ip::tcp::socket> water_column;
     std::unique_ptr<boost::asio::ip::tcp::socket> cmd;
   } sockets_;
+  struct{
+    boost::array<char, sizeof(norbit_msgs::CommonHeader)> bathymetric;
+    boost::array<char, sizeof(norbit_msgs::CommonHeader)> water_column;
+  } hdr_buff_;
   std::map<std::string, ros::ServiceServer> srv_map_;
   boost::asio::io_service io_service_;
-  boost::array<char, sizeof(norbit_msgs::CommonHeader)> recv_buffer_;
-  boost::array<char, 8000000> dataBuffer_;
   boost::asio::streambuf cmd_resp_buffer_;
   ConnectionParams params_;
   ros::NodeHandle node_;
