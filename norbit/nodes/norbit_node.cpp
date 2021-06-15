@@ -33,14 +33,14 @@ void shutdownCallback(XmlRpc::XmlRpcValue& params, XmlRpc::XmlRpcValue& result)
 
 int main(int argc, char *argv[]) {
   // Override SIGINT handler
-  ros::init(argc, argv, "MyNode", ros::init_options::NoSigintHandler);
+  ros::init(argc, argv, "norbit_node", ros::init_options::NoSigintHandler);
   signal(SIGINT, mySigIntHandler);
 
   // Override XMLRPC shutdown
   ros::XMLRPCManager::instance()->unbind("shutdown");
   ros::XMLRPCManager::instance()->bind("shutdown", shutdownCallback);
 
-  ros::init(argc, argv, "norbit_node");
+  //ros::init(argc, argv, "norbit_node");
   NorbitConnection con;
   con.spin();
 }

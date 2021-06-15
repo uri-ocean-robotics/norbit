@@ -7,7 +7,7 @@ namespace norbit_types {
 
   size_t WaterColumnData::dataSize(){
     size_t size = 0;
-    switch (water_column_header_->sonar_mode) {
+    switch (water_column_header_->dtype) {
       case norbit_msgs::WaterColumnHeader::DTYPE_UINT8:
         size=1;
         break;
@@ -46,11 +46,13 @@ namespace norbit_types {
           bits_.get() );
     auto m = water_column_header_->M;
     auto n = water_column_header_->N;
-    auto dtype_size = water_column_header_->M * water_column_header_->N * dataSize();
+    auto pixel_data_size = water_column_header_->M * water_column_header_->N * dataSize();
+    auto pixel_data_offset = sizeof(norbit_msgs::WaterColumnHeader);
+    auto beam_directions_offset = pixel_data_offset+pixel_data_size;
     pixel_data_ = reinterpret_cast<uint8_t*>(
-          &bits_.get()[sizeof(norbit_msgs::WaterColumnHeader)] );
+          &bits_.get()[pixel_data_offset] );
     beam_directions_ = reinterpret_cast<float32*>(
-          &bits_.get()[dtype_size*m*n]);
+          &bits_.get()[beam_directions_offset]);
   }
 
 
@@ -64,7 +66,8 @@ namespace norbit_types {
     outMsg.header.frame_id = frame_id;
     outMsg.water_column.common_header = *comm_hdr_;
     outMsg.water_column.water_column_header = *water_column_header_;
-    outMsg.water_column.pixel_data.assign(pixel_data_,pixel_data_+m*n);
+    auto pixel_data_size = water_column_header_->M * water_column_header_->N * dataSize();
+    outMsg.water_column.pixel_data.assign(pixel_data_,pixel_data_+pixel_data_size);
     outMsg.water_column.beam_directions.assign(beam_directions_,beam_directions_+n);
     return outMsg;
   }

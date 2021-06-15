@@ -53,8 +53,7 @@ public:
   void listenForCmd();
   void receiveCmd(const boost::system::error_code &err);
   void receive();
-  void
-  recHandler(const boost::system::error_code &error, // Result of operation.
+  void recHandler(const boost::system::error_code &error, // Result of operation.
              std::size_t bytes_transferred // Number of bytes received.
   );
 
@@ -87,7 +86,7 @@ protected:
   std::map<std::string, ros::ServiceServer> srv_map_;
   boost::asio::io_service io_service_;
   boost::array<char, sizeof(norbit_msgs::CommonHeader)> recv_buffer_;
-  boost::array<char, 50000> dataBuffer_;
+  boost::array<char, 8000000> dataBuffer_;
   boost::asio::streambuf cmd_resp_buffer_;
   ConnectionParams params_;
   ros::NodeHandle node_;
