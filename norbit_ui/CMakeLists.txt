@@ -11,7 +11,7 @@ project(${PACKAGE_NAME})  ## this package name is the name of the directory this
 ################################
 
 set(ROS_DEPENDS
-  ${PROJECT_NAME}_msgs
+  norbit_msgs
   roscpp
   std_msgs
   pcl_conversions
@@ -25,11 +25,14 @@ set(ROS_DEPENDS
 
 # if you end up using external dependencies it be a bit more manual (it's not that bad don't worry)
 set(EXTERNAL_DEPENDS
-  #none
+  Qt5Widgets
+  Qt5PrintSupport
   )
 
 set(EXTERNAL_DEPENDS_LIB
-
+  Qt5::Widgets
+  Qt5::PrintSupport
+  Qt5::Core
   )
 
 ##########################################
@@ -39,6 +42,8 @@ set(EXTERNAL_DEPENDS_LIB
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++14)
 
+## need this for qt auto generated headers to include!
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 
 ###
@@ -87,12 +92,42 @@ file(GLOB NODES
   "nodes/*.cpp"
 )
 
+###
+### QT stuff (required if you want a GUI)
+###
+set(CMAKE_AUTOMOC ON)  #This will autogenerate qt gui stuff
+set(CMAKE_AUTORCC ON)  #this needs to be on so cmake will know what to do with QT resource Files
+
+#find_package(Qt5Widgets)
+#find_package(Qt5PrintSupport)
+#find all the qt UI stuff
+file(GLOB_RECURSE UI
+    "include/${PROJECT_NAME}/*.ui"
+)
+
+message("Adding ${PROJECT_NAME} UI files: " )
+foreach(source ${UI})
+    message("  - " ${source})
+endforeach(source)
+
+#make them into headers
+qt5_wrap_ui (UI_HDRS  ${UI})
+
+message("Generating ${PROJECT_NAME} UI Headers: " )
+foreach(source ${UI_HDRS})
+    message("  - " ${source})
+endforeach(source)
+
+###
+### compile
+###
+
 message("buliding ${PROJECT_NAME} node: ")
 foreach(NODE_FILE ${NODES})
   get_filename_component(NODE_NAME ${NODE_FILE} NAME_WE)
   message("  - " ${NODE_NAME})
 
-  add_executable(${NODE_NAME} ${NODE_FILE} ${HDRS} ${SRCS})
+  add_executable(${NODE_NAME} ${NODE_FILE} ${HDRS} ${SRCS} ${UI})
   add_dependencies(${NODE_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
   target_link_libraries (${NODE_NAME} ${catkin_LIBRARIES} ${EXTERNAL_DEPENDS_LIB})
   target_include_directories(${NODE_NAME} PRIVATE "include/${PROJECT_NAME}/")
@@ -104,22 +139,22 @@ endforeach(NODE_FILE)
 
 ###
 ###  This is the stuff that allows your project to be used as a library for another project
-###
-add_library(${PROJECT_NAME}
-    ${HDRS} ${SRCS}
-)
-add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries (${PROJECT_NAME} ${catkin_LIBRARIES} ${EXTERNAL_DEPENDS_LIB})
-target_include_directories(${PROJECT_NAME} PRIVATE "include/${PROJECT_NAME}/")
+####
+#add_library(${PROJECT_NAME}
+#    ${HDRS} ${SRCS}
+#)
+#add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#target_link_libraries (${PROJECT_NAME} ${catkin_LIBRARIES} ${EXTERNAL_DEPENDS_LIB})
+#target_include_directories(${PROJECT_NAME} PRIVATE "include/${PROJECT_NAME}/")
 
-install(DIRECTORY include/${PROJECT_NAME}/
-    DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-    FILES_MATCHING PATTERN "*.h"
-    PATTERN ".svn" EXCLUDE
-)
+#install(DIRECTORY include/${PROJECT_NAME}/
+#    DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+#    FILES_MATCHING PATTERN "*.h"
+#    PATTERN ".svn" EXCLUDE
+#)
 
-install(TARGETS ${PROJECT_NAME}
-    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+#install(TARGETS ${PROJECT_NAME}
+#    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+#)
