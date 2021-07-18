@@ -15,8 +15,9 @@ NorbitConnection::NorbitConnection() : privateNode_("~"), loop_rate(200.0) {
   listenForCmd();
 
   initializeSonarParams();
-
-  receiveWC();
+  if(pubWC()){
+    receiveWC();
+  }
 
   receiveBathy();
 }
@@ -35,11 +36,15 @@ void NorbitConnection::updateParams() {
                                   params_.bathymetric_topic, "bathymetric");
 
   privateNode_.param<std::string>("water_column_topic",
-                                  params_.water_column_topic, "water_column");
+                                  params_.water_column_topic, "");
 
   privateNode_.getParam("cmd_timeout", params_.cmd_timeout);
   privateNode_.getParam("startup_settings", params_.startup_settings);
   privateNode_.getParam("shutdown_settings", params_.shutdown_settings);
+}
+
+bool NorbitConnection::pubWC(){
+  return params_.water_column_topic!="";
 }
 
 void NorbitConnection::setupPubSub() {
@@ -51,8 +56,10 @@ void NorbitConnection::setupPubSub() {
   bathy_pub_ = node_.advertise<norbit_msgs::BathymetricStamped>(
       params_.bathymetric_topic, 1);
 
-  wc_pub_ = node_.advertise<norbit_msgs::WaterColumnStamped>(
-      params_.water_column_topic, 1);
+  if(pubWC()){
+    wc_pub_ = node_.advertise<norbit_msgs::WaterColumnStamped>(
+        params_.water_column_topic, 1);
+  }
 
   // SRVs
   srv_map_["norbit_cmd"] = privateNode_.advertiseService(
@@ -81,12 +88,13 @@ bool NorbitConnection::openConnections() {
     sockets_.bathymetric->connect(boost::asio::ip::tcp::endpoint(
         boost::asio::ip::address::from_string(params_.ip), params_.bathy_port));
 
+    if(pubWC()){
     sockets_.water_column = std::unique_ptr<boost::asio::ip::tcp::socket>(
         new boost::asio::ip::tcp::socket(io_service_));
 
     sockets_.water_column->connect(boost::asio::ip::tcp::endpoint(
         boost::asio::ip::address::from_string(params_.ip), params_.water_column_port));
-
+    }
     sockets_.cmd = std::unique_ptr<boost::asio::ip::tcp::socket>(
         new boost::asio::ip::tcp::socket(io_service_));
 
@@ -104,8 +112,10 @@ bool NorbitConnection::openConnections() {
 void NorbitConnection::closeConnections() {
   sockets_.bathymetric->close();
   sockets_.bathymetric.reset();
-  sockets_.water_column->close();
-  sockets_.water_column.reset();
+  if(pubWC()){
+    sockets_.water_column->close();
+    sockets_.water_column.reset();
+  }
   sockets_.cmd->close();
   sockets_.cmd.reset();
 }

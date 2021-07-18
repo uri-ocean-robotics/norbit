@@ -86,6 +86,7 @@ public:
   static bool shutdown_;
 
 protected:
+  bool pubWC();
   struct {
     std::unique_ptr<boost::asio::ip::tcp::socket> bathymetric;
     std::unique_ptr<boost::asio::ip::tcp::socket> water_column;

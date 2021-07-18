@@ -6,6 +6,9 @@
 #include <ros/ros.h>
 #include <norbit_msgs/WaterColumnStamped.h>
 #include <qtimer.h>
+#include  <opencv2/opencv.hpp>
+#include <opencv2/highgui.hpp>
+#include "opencv2/imgproc.hpp"
 
 namespace Ui {
 class WaterColumnView;

@@ -21,19 +21,27 @@ set(ROS_DEPENDS
   tf2_msgs
   tf2_sensor_msgs
   norbit_msgs
+  cv_bridge
   )
 
 # if you end up using external dependencies it be a bit more manual (it's not that bad don't worry)
 set(EXTERNAL_DEPENDS
   Qt5Widgets
   Qt5PrintSupport
+  OpenCV
   )
 
 set(EXTERNAL_DEPENDS_LIB
   Qt5::Widgets
   Qt5::PrintSupport
   Qt5::Core
+  #${OpenCV_LIBS}
   )
+
+set(INCLUDE_DIRECTORIES
+  ${OpenCV_INCLUDE_DIRS}
+  )
+
 
 ##########################################
 ##  Be Carefull editing below this line ##
@@ -75,6 +83,7 @@ catkin_package(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
+  ${INCLUDE_DIRECTORIES}
 )
 
 ###########
@@ -129,7 +138,7 @@ foreach(NODE_FILE ${NODES})
 
   add_executable(${NODE_NAME} ${NODE_FILE} ${HDRS} ${SRCS} ${UI})
   add_dependencies(${NODE_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-  target_link_libraries (${NODE_NAME} ${catkin_LIBRARIES} ${EXTERNAL_DEPENDS_LIB})
+  target_link_libraries (${NODE_NAME} ${catkin_LIBRARIES}  ${OpenCV_LIBS} ${EXTERNAL_DEPENDS_LIB})
   target_include_directories(${NODE_NAME} PRIVATE "include/${PROJECT_NAME}/")
 
 endforeach(NODE_FILE)
@@ -139,7 +148,7 @@ endforeach(NODE_FILE)
 
 ###
 ###  This is the stuff that allows your project to be used as a library for another project
-####
+###
 #add_library(${PROJECT_NAME}
 #    ${HDRS} ${SRCS}
 #)
