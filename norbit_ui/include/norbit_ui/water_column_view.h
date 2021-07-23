@@ -9,6 +9,7 @@
 #include  <opencv2/opencv.hpp>
 #include <opencv2/highgui.hpp>
 #include "opencv2/imgproc.hpp"
+#include "libInterpolate/Interpolate.hpp"
 
 namespace Ui {
 class WaterColumnView;
@@ -33,7 +34,7 @@ private:
   ros::NodeHandlePtr nh_;
   ros::Subscriber wc_sub_;
   QTimer *ros_timer;
-  //QCPColorMap *colorMap;
+  QCPColorMap *colorMap;
 };
 
 #endif // WATER_COLUMN_VIEW_H

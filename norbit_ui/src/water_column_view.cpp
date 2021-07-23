@@ -11,12 +11,14 @@ WaterColumnView::WaterColumnView(QWidget *parent) :
 
   ros_timer = new QTimer(this);
   connect(ros_timer, SIGNAL(timeout()), this, SLOT(spinOnce()));
-  ros_timer->start(100);
+  ros_timer->start(500);
 
   ui->plot->setInteractions(QCP::iRangeDrag|QCP::iRangeZoom); // this will also allow rescaling the color scale by dragging/zooming
   ui->plot->axisRect()->setupFullAxesBox(true);
   ui->plot->xAxis->setLabel("x");
   ui->plot->yAxis->setLabel("y");
+
+  colorMap = new QCPColorMap(ui->plot->xAxis, ui->plot->yAxis);
 
   //colorMap = new QCPColorMap(ui->plot->xAxis, ui->plot->yAxis);
 }
@@ -26,46 +28,117 @@ WaterColumnView::~WaterColumnView()
   delete ui;
 }
 
-float row(size_t index, size_t M, size_t N){
-
+double getRange(const norbit_msgs::WaterColumnStamped::ConstPtr &wc_msg, size_t sample_number){
+    double range = double(sample_number) *
+            wc_msg->water_column.water_column_header.snd_velocity /
+            (2.0 * wc_msg->water_column.water_column_header.sample_rate);
+    return  range;
 }
+
+int getSampleNo(const norbit_msgs::WaterColumnStamped::ConstPtr &wc_msg, double range){
+    double scale = (2.0 * wc_msg->water_column.water_column_header.sample_rate) /
+                       wc_msg->water_column.water_column_header.snd_velocity;
+    int sample_no = range * scale;
+    return sample_no;
+}
+
+double rowMajor(const norbit_msgs::WaterColumnStamped::ConstPtr &wc_msg, double  u, double v){
+
+  auto data = reinterpret_cast<const int16_t*>(wc_msg->water_column.pixel_data.data());
+  u = u + 0.5 - (u<0);
+  v = v + 0.5 - (v<0);
+  auto rows = wc_msg->water_column.water_column_header.M;
+  auto cols = wc_msg->water_column.water_column_header.N;
+  auto index = int(v)*int(cols)+int(u);
+
+  if (int(u)>=cols || int(v)>=rows || int(u)<0 || int(v)<0 || index >= int(rows * cols) || index < 0){
+    return 0.0;
+  }else {
+    return data[index];
+  }
+}
+
+double getVal(const norbit_msgs::WaterColumnStamped::ConstPtr &wc_msg,_1D::LinearInterpolator<double> beam_idx_interp, double x, double y){
+
+
+  auto angle = atan2(x,y);
+  if(angle>wc_msg->water_column.beam_directions.back() || angle<wc_msg->water_column.beam_directions.front()){
+    return 0;
+  }else{
+
+      x = getSampleNo(wc_msg,x);
+      y = getSampleNo(wc_msg,y);
+
+
+      auto u = beam_idx_interp(angle);
+      auto v = std::sqrt(std::pow(x,2)+std::pow(y,2));
+      auto out = rowMajor(wc_msg,u,v);
+
+      return out;
+  }
+}
+
+
+
 
 void WaterColumnView::wcCallback(const norbit_msgs::WaterColumnStamped::ConstPtr &wc_msg){
   auto M = wc_msg->water_column.water_column_header.M;
   auto N = wc_msg->water_column.water_column_header.N;
   const uint8_t *bits = wc_msg->water_column.pixel_data.data();
 
-  void * mutable_data;
-  auto data_vect = wc_msg->water_column.pixel_data;
-  mutable_data= reinterpret_cast<void*>(data_vect.data());
-  //mutable_data = malloc(sizeof(uint8_t)*M*N);
-  //memcpy(mutable_data,reinterpret_cast<void const*>(wc_msg->water_column.pixel_data.data()),sizeof(uint8_t)*M*N);
-  cv::Mat raw_mat =           cv::Mat(M,N,CV_16U,mutable_data);
-  cv::Mat transformed_mat =   cv::Mat(500,500,CV_16U);
-  cv::Mat x_map =             cv::Mat(M,N,CV_32FC1);
-  cv::Mat y_map =             cv::Mat(M,N,CV_32FC1);
-
-  for(int row = 0; row<transformed_mat.rows ; row++){
-    for(int col = 0; col<transformed_mat.cols; col++){
-      x_map.at<double>(row,col) = //row * std::sin( wc_msg->water_column.beam_directions[beam]);
-      y_map.at<double>(row,col) = //row * std::cos( wc_msg->water_column.beam_directions[beam]);
-    }
+  auto beam_angles = wc_msg->water_column.beam_directions;
+  std::vector<float> beam_index;
+  beam_index.resize(N);
+  for(size_t i = 0; i< beam_index.size(); i++){
+    beam_index[i] = i;
   }
+  _1D::LinearInterpolator<double> beam_idx_interp;
+  beam_idx_interp.setData(beam_angles,beam_index);
 
-  cv::remap(raw_mat,transformed_mat,x_map,y_map,cv::INTER_LINEAR);
+//  void * mutable_data;
+//  auto data_vect = wc_msg->water_column.pixel_data;
+//  mutable_data= reinterpret_cast<void*>(data_vect.data());
+////  //mutable_data = malloc(sizeof(uint8_t)*M*N);
+//  //memcpy(mutable_data,reinterpret_cast<void const*>(wc_msg->water_column.pixel_data.data()),sizeof(uint8_t)*M*N);
+//  cv::Mat raw_mat =           cv::Mat(M,N,CV_16U,mutable_data);
+//  cv::Mat transformed_mat =   cv::Mat(200,200,CV_16U);
+//  cv::Mat x_map =             cv::Mat(M,N,CV_32FC1);
+//  cv::Mat y_map =             cv::Mat(M,N,CV_32FC1);
 
-  cv::imshow("WC",transformed_mat);
-  cv::imshow("raw",raw_mat);
+//  for(int row = 0; row<transformed_mat.rows ; row++){
+//    for(int col = 0; col<transformed_mat.cols; col++){
+//      double x = (row - double(transformed_mat.rows)/2.0)*4;
+//      double y = (col - double(transformed_mat.cols)/2.0)*4;
+//      transformed_mat.at<uint16_t>(row,col) = getVal(wc_msg,beam_idx_interp,x,y);//row * std::sin( wc_msg->water_column.beam_directions[beam]);
+//      transformed_mat.at<uint16_t>(row,col) = getVal(wc_msg,beam_idx_interp,x,y);//row * std::cos( wc_msg->water_column.beam_directions[beam]);
+//    }
+//  }
+
+  //cv::remap(raw_mat,transformed_mat,x_map,y_map,cv::INTER_NEAREST);
+
+//  cv::Point2f center( (float)raw_mat.cols / 2, 0);
+//  double maxRadius = raw_mat.rows;
+
+//  cv::warpPolar(raw_mat, transformed_mat, transformed_mat.size(), center, maxRadius, cv::WARP_INVERSE_MAP);
+
+//  cv::imshow("WC",transformed_mat);
+//  cv::imshow("raw",raw_mat);
 
 
   //ROS_INFO("wc callback");
   size_t type_size = 0;
   ui->plot->clearItems();
 
+  ui->plot->yAxis->setRangeReversed(ui->reverse_y->checkState());
+  ui->plot->xAxis->setRangeReversed(ui->reverse_x->checkState());
 
-  QCPColorMap *colorMap = new QCPColorMap(ui->plot->xAxis, ui->plot->yAxis);
-  colorMap->data()->setSize(N, M);
-  colorMap->setInterpolate(false);
+
+  int nx = 300;
+  int ny = 400;
+  colorMap->data()->setSize(nx, ny); // we want the color map to have nx * ny data points
+
+  double max_range = ui->range->value();
+  colorMap->data()->setRange(QCPRange(-max_range, max_range), QCPRange(0, max_range));
 
 
   switch (wc_msg->water_column.water_column_header.dtype) {
@@ -73,19 +146,21 @@ void WaterColumnView::wcCallback(const norbit_msgs::WaterColumnStamped::ConstPtr
     type_size = 2;
     auto len = M*N;
     auto data = reinterpret_cast<const int16_t*>(bits);
+
+
     double x, y, z;
-    for (size_t arr_idx = 0; arr_idx<len; arr_idx++) {
-      double val = data[arr_idx];
-
-      size_t yIndex = arr_idx / N;
-      size_t xIndex = arr_idx % N;
-
-      //colorMap->data()->cellToCoord(xIndex, yIndex, &x, &y);
-      colorMap->data()->setCell(xIndex, yIndex, val);
-
+    for (int xIndex=0; xIndex<nx; ++xIndex)
+    {
+      for (int yIndex=0; yIndex<ny; ++yIndex)
+      {
+        colorMap->data()->cellToCoord(xIndex, yIndex, &x, &y);
+        z = getVal(wc_msg,beam_idx_interp,x,y);
+        colorMap->data()->setCell(xIndex, yIndex, z);
+      }
     }
     break;
   }
+
 
 //  QCPColorScale *colorScale = new QCPColorScale(ui->plot);
 //  ui->plot->plotLayout()->addElement(0, 1, colorScale); // add it to the right of the main axis rect
@@ -99,7 +174,9 @@ void WaterColumnView::wcCallback(const norbit_msgs::WaterColumnStamped::ConstPtr
   // the gradient, see the documentation of QCPColorGradient for what's possible.
 
   // rescale the data dimension (color) such that all data points lie in the span visualized by the color gradient:
-  colorMap->rescaleDataRange();
+  //colorMap->rescaleDataRange();
+
+  colorMap->setDataRange(QCPRange(0,ui->gain->maximum() - ui->gain->value()));
 
   // make sure the axis rect and color scale synchronize their bottom and top margins (so they line up):
   QCPMarginGroup *marginGroup = new QCPMarginGroup(ui->plot);
@@ -112,9 +189,9 @@ void WaterColumnView::wcCallback(const norbit_msgs::WaterColumnStamped::ConstPtr
   ui->plot->replot();
 
 
-  transformed_mat.deallocate();
-  x_map.deallocate();
-  y_map.deallocate();
+//  transformed_mat.deallocate();
+//  x_map.deallocate();
+//  y_map.deallocate();
 
   return;
 }
