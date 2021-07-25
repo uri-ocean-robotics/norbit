@@ -7,11 +7,22 @@ WaterColumnView::WaterColumnView(QWidget *parent) :
 {
   ui->setupUi(this);
   nh_.reset(new ros::NodeHandle("~"));
-  wc_sub_ = nh_->subscribe<norbit_msgs::WaterColumnStamped>("/herc/perception/sensors/norbit/water_column", 1, &WaterColumnView::wcCallback, this);
 
+  ros::master::V_TopicInfo master_topics;
+  ros::master::getTopics(master_topics);
+  ui->wc_topic->clear();
+  QStringList topic_list;
+  for(auto topic : master_topics){
+    if(topic.datatype=="norbit_msgs/WaterColumnStamped"){
+      QString::fromStdString(topic.name);
+      topic_list.push_back(QString::fromStdString(topic.name));
+    }
+  }
+
+  ui->wc_topic->addItems(topic_list);
   ros_timer = new QTimer(this);
   connect(ros_timer, SIGNAL(timeout()), this, SLOT(spinOnce()));
-  ros_timer->start(500);
+  ros_timer->start(100);
 
   ui->plot->setInteractions(QCP::iRangeDrag|QCP::iRangeZoom); // this will also allow rescaling the color scale by dragging/zooming
   ui->plot->axisRect()->setupFullAxesBox(true);
@@ -197,9 +208,16 @@ void WaterColumnView::wcCallback(const norbit_msgs::WaterColumnStamped::ConstPtr
 }
 
 void WaterColumnView::spinOnce(){
-  if(ros::ok())
-      ros::spinOnce();
+  if(ros::ok()){
+    ros::spinOnce();
+  }
   else
       QApplication::quit();
 }
 
+
+void WaterColumnView::on_wc_topic_currentIndexChanged(const QString &arg1)
+{
+  if(wc_sub_.getTopic() != arg1.toStdString())
+    wc_sub_ = nh_->subscribe<norbit_msgs::WaterColumnStamped>(arg1.toStdString(), 1, &WaterColumnView::wcCallback, this);
+}

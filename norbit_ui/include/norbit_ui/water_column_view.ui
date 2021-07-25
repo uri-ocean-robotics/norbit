@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>300</height>
+    <width>753</width>
+    <height>350</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -53,6 +53,9 @@
    </item>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QComboBox" name="wc_topic"/>
+     </item>
      <item>
       <widget class="QCheckBox" name="reverse_x">
        <property name="text">

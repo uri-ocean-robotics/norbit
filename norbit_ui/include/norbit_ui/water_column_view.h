@@ -10,6 +10,7 @@
 #include <opencv2/highgui.hpp>
 #include "opencv2/imgproc.hpp"
 #include "libInterpolate/Interpolate.hpp"
+#include "ros/master.h"
 
 namespace Ui {
 class WaterColumnView;
@@ -28,6 +29,8 @@ private slots:
   void spinOnce();
 
 
+
+  void on_wc_topic_currentIndexChanged(const QString &arg1);
 
 private:
   Ui::WaterColumnView *ui;
