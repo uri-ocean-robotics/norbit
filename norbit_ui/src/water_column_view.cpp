@@ -31,12 +31,19 @@ WaterColumnView::WaterColumnView(QWidget *parent) :
 
   colorMap = new QCPColorMap(ui->plot->xAxis, ui->plot->yAxis);
 
+  setupSignals();
+
   //colorMap = new QCPColorMap(ui->plot->xAxis, ui->plot->yAxis);
 }
 
 WaterColumnView::~WaterColumnView()
 {
   delete ui;
+}
+
+void WaterColumnView::setupSignals(){
+    QObject::connect(ui->plot, SIGNAL(mouseMove(QMouseEvent*)),
+                     this,SLOT(updateRangeBearing(QMouseEvent*)));
 }
 
 double getRange(const norbit_msgs::WaterColumnStamped::ConstPtr &wc_msg, size_t sample_number){
@@ -207,6 +214,7 @@ void WaterColumnView::wcCallback(const norbit_msgs::WaterColumnStamped::ConstPtr
   return;
 }
 
+
 void WaterColumnView::spinOnce(){
   if(ros::ok()){
     ros::spinOnce();
@@ -220,4 +228,20 @@ void WaterColumnView::on_wc_topic_currentIndexChanged(const QString &arg1)
 {
   if(wc_sub_.getTopic() != arg1.toStdString())
     wc_sub_ = nh_->subscribe<norbit_msgs::WaterColumnStamped>(arg1.toStdString(), 1, &WaterColumnView::wcCallback, this);
+}
+
+void WaterColumnView::updateRangeBearing(QMouseEvent *event){
+    QPoint p = event->pos();
+    double x = ui->plot->xAxis->pixelToCoord(p.x());
+    double y = ui->plot->yAxis->pixelToCoord(p.y());
+    double range = std::sqrt(std::pow(x,2)+std::pow(y,2));
+    double bearing = std::atan2(x,y)*180/3.14519;
+    QString text;
+    text.sprintf("Cursor Location:  x=%04.1f, y=%04.1f, range=%04.1f, bearing=%04.1f", x,y,range,bearing);
+    ui->range_bearing->setText(text);
+}
+
+void WaterColumnView::on_fullscreen_btn_clicked()
+{
+    isFullScreen() ? showNormal() : showFullScreen();
 }

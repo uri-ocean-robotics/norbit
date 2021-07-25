@@ -23,14 +23,18 @@ class WaterColumnView : public QWidget
 public:
   explicit WaterColumnView(QWidget *parent = nullptr);
   ~WaterColumnView();
+  void setupSignals();
 
   void wcCallback(const norbit_msgs::WaterColumnStamped::ConstPtr& wc_msg);
 private slots:
   void spinOnce();
+  void updateRangeBearing(QMouseEvent *event);
 
 
 
   void on_wc_topic_currentIndexChanged(const QString &arg1);
+
+  void on_fullscreen_btn_clicked();
 
 private:
   Ui::WaterColumnView *ui;
