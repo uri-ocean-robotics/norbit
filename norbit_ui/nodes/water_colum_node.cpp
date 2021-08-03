@@ -4,7 +4,7 @@
 int main(int argc, char *argv[])
 {
 
-  ros::init(argc, argv, "water_column_view");
+  ros::init(argc, argv, "water_column_view",ros::init_options::AnonymousName);
   QApplication a(argc, argv);
 
   WaterColumnView w;
