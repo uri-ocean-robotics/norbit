@@ -29,12 +29,18 @@ public:
 private slots:
   void spinOnce();
   void updateRangeBearing(QMouseEvent *event);
+  void setRange(double range);
+  void updateTopics();
 
 
 
   void on_wc_topic_currentIndexChanged(const QString &arg1);
 
   void on_fullscreen_btn_clicked();
+
+  void on_range_valueChanged(double arg1);
+
+  void on_refresh_btn_clicked();
 
 private:
   Ui::WaterColumnView *ui;

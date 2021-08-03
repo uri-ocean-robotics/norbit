@@ -68,6 +68,13 @@
       <widget class="QComboBox" name="wc_topic"/>
      </item>
      <item>
+      <widget class="QToolButton" name="refresh_btn">
+       <property name="text">
+        <string>refresh</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QCheckBox" name="reverse_x">
        <property name="text">
         <string>Reverse X</string>

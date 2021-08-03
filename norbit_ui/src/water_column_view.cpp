@@ -8,28 +8,16 @@ WaterColumnView::WaterColumnView(QWidget *parent) :
   ui->setupUi(this);
   nh_.reset(new ros::NodeHandle("~"));
 
-  ros::master::V_TopicInfo master_topics;
-  ros::master::getTopics(master_topics);
-  ui->wc_topic->clear();
-  QStringList topic_list;
-  for(auto topic : master_topics){
-    if(topic.datatype=="norbit_msgs/WaterColumnStamped"){
-      QString::fromStdString(topic.name);
-      topic_list.push_back(QString::fromStdString(topic.name));
-    }
-  }
+  updateTopics();
 
-  ui->wc_topic->addItems(topic_list);
   ros_timer = new QTimer(this);
   connect(ros_timer, SIGNAL(timeout()), this, SLOT(spinOnce()));
   ros_timer->start(100);
 
   ui->plot->setInteractions(QCP::iRangeDrag|QCP::iRangeZoom); // this will also allow rescaling the color scale by dragging/zooming
   ui->plot->axisRect()->setupFullAxesBox(true);
-  ui->plot->xAxis->setLabel("x");
-  ui->plot->yAxis->setLabel("y");
-
   colorMap = new QCPColorMap(ui->plot->xAxis, ui->plot->yAxis);
+  setRange(ui->range->value());
 
   setupSignals();
 
@@ -155,8 +143,10 @@ void WaterColumnView::wcCallback(const norbit_msgs::WaterColumnStamped::ConstPtr
   int ny = 400;
   colorMap->data()->setSize(nx, ny); // we want the color map to have nx * ny data points
 
-  double max_range = ui->range->value();
-  colorMap->data()->setRange(QCPRange(-max_range, max_range), QCPRange(0, max_range));
+  //double max_range = ui->range->value();
+
+  ui->plot->yAxis->setScaleRatio(ui->plot->xAxis,1.0);
+  colorMap->data()->setRange(QCPRange(ui->plot->xAxis->range().lower, ui->plot->xAxis->range().upper), QCPRange(ui->plot->yAxis->range().lower, ui->plot->yAxis->range().upper));
 
 
   switch (wc_msg->water_column.water_column_header.dtype) {
@@ -202,9 +192,11 @@ void WaterColumnView::wcCallback(const norbit_msgs::WaterColumnStamped::ConstPtr
 //  colorScale->setMarginGroup(QCP::msBottom|QCP::msTop, marginGroup);
 
   // rescale the key (x) and value (y) axes so the whole color map is visible:
-  ui->plot->rescaleAxes();
+  //ui->plot->rescaleAxes();
+
 
   ui->plot->replot();
+
 
 
 //  transformed_mat.deallocate();
@@ -244,4 +236,35 @@ void WaterColumnView::updateRangeBearing(QMouseEvent *event){
 void WaterColumnView::on_fullscreen_btn_clicked()
 {
     isFullScreen() ? showNormal() : showFullScreen();
+}
+
+void WaterColumnView::setRange(double range){
+  ui->plot->yAxis->setRange(0,range);
+  ui->plot->xAxis->setScaleRatio(ui->plot->yAxis,1.0);
+  auto size = ui->plot->xAxis->range().size();
+  ui->plot->xAxis->setRange(-size/2,size/2);
+}
+
+void WaterColumnView::on_range_valueChanged(double arg1)
+{
+  setRange(arg1);
+}
+
+void WaterColumnView::updateTopics(){
+  ros::master::V_TopicInfo master_topics;
+  ros::master::getTopics(master_topics);
+  ui->wc_topic->clear();
+  QStringList topic_list;
+  for(auto topic : master_topics){
+    if(topic.datatype=="norbit_msgs/WaterColumnStamped"){
+      QString::fromStdString(topic.name);
+      topic_list.push_back(QString::fromStdString(topic.name));
+    }
+  }
+  ui->wc_topic->addItems(topic_list);
+}
+
+void WaterColumnView::on_refresh_btn_clicked()
+{
+  updateTopics();
 }
