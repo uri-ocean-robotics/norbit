@@ -101,36 +101,6 @@ void WaterColumnView::wcCallback(const norbit_msgs::WaterColumnStamped::ConstPtr
   _1D::LinearInterpolator<double> beam_idx_interp;
   beam_idx_interp.setData(beam_angles,beam_index);
 
-//  void * mutable_data;
-//  auto data_vect = wc_msg->water_column.pixel_data;
-//  mutable_data= reinterpret_cast<void*>(data_vect.data());
-////  //mutable_data = malloc(sizeof(uint8_t)*M*N);
-//  //memcpy(mutable_data,reinterpret_cast<void const*>(wc_msg->water_column.pixel_data.data()),sizeof(uint8_t)*M*N);
-//  cv::Mat raw_mat =           cv::Mat(M,N,CV_16U,mutable_data);
-//  cv::Mat transformed_mat =   cv::Mat(200,200,CV_16U);
-//  cv::Mat x_map =             cv::Mat(M,N,CV_32FC1);
-//  cv::Mat y_map =             cv::Mat(M,N,CV_32FC1);
-
-//  for(int row = 0; row<transformed_mat.rows ; row++){
-//    for(int col = 0; col<transformed_mat.cols; col++){
-//      double x = (row - double(transformed_mat.rows)/2.0)*4;
-//      double y = (col - double(transformed_mat.cols)/2.0)*4;
-//      transformed_mat.at<uint16_t>(row,col) = getVal(wc_msg,beam_idx_interp,x,y);//row * std::sin( wc_msg->water_column.beam_directions[beam]);
-//      transformed_mat.at<uint16_t>(row,col) = getVal(wc_msg,beam_idx_interp,x,y);//row * std::cos( wc_msg->water_column.beam_directions[beam]);
-//    }
-//  }
-
-  //cv::remap(raw_mat,transformed_mat,x_map,y_map,cv::INTER_NEAREST);
-
-//  cv::Point2f center( (float)raw_mat.cols / 2, 0);
-//  double maxRadius = raw_mat.rows;
-
-//  cv::warpPolar(raw_mat, transformed_mat, transformed_mat.size(), center, maxRadius, cv::WARP_INVERSE_MAP);
-
-//  cv::imshow("WC",transformed_mat);
-//  cv::imshow("raw",raw_mat);
-
-
   //ROS_INFO("wc callback");
   size_t type_size = 0;
   ui->plot->clearItems();

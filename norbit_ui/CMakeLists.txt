@@ -28,7 +28,7 @@ set(ROS_DEPENDS
 set(EXTERNAL_DEPENDS
   Qt5Widgets
   Qt5PrintSupport
-  OpenCV
+  #OpenCV
   )
 
 set(EXTERNAL_DEPENDS_LIB
@@ -39,7 +39,7 @@ set(EXTERNAL_DEPENDS_LIB
   )
 
 set(INCLUDE_DIRECTORIES
-  ${OpenCV_INCLUDE_DIRS}
+  #${OpenCV_INCLUDE_DIRS}
   )
 
 
@@ -138,7 +138,7 @@ foreach(NODE_FILE ${NODES})
 
   add_executable(${NODE_NAME} ${NODE_FILE} ${HDRS} ${SRCS} ${UI})
   add_dependencies(${NODE_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-  target_link_libraries (${NODE_NAME} ${catkin_LIBRARIES}  ${OpenCV_LIBS} ${EXTERNAL_DEPENDS_LIB})
+  target_link_libraries (${NODE_NAME} ${catkin_LIBRARIES}  ${EXTERNAL_DEPENDS_LIB})
   target_include_directories(${NODE_NAME} PRIVATE "include/${PROJECT_NAME}/")
 
 endforeach(NODE_FILE)
