@@ -21,6 +21,7 @@
 #include "norbit_msgs/NorbitCmd.h"
 #include "norbit_msgs/SetPower.h"
 #include "norbit_types/message.h"
+#include "conversions.h"
 
 // using namespace boost::asio;
 // using ip::tcp;
