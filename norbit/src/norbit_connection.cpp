@@ -15,7 +15,7 @@ NorbitConnection::NorbitConnection() : privateNode_("~"), loop_rate(200.0) {
   listenForCmd();
 
   initializeSonarParams();
-  if(pubWC()){
+  if(params_.pubWC()){
     receiveWC();
   }
 
@@ -30,35 +30,51 @@ void NorbitConnection::updateParams() {
   privateNode_.param<int>("bathy_port", params_.bathy_port, 2210);
   privateNode_.param<int>("water_column_port", params_.water_column_port, 2211);
   privateNode_.param<int>("cmd_port", params_.cmd_port, 2209);
-  privateNode_.param<std::string>("pointcloud_topic", params_.pointcloud_topic,
-                                  "detections");
-  privateNode_.param<std::string>("bathymetric_topic",
-                                  params_.bathymetric_topic, "bathymetric");
 
-  privateNode_.param<std::string>("water_column_topic",
-                                  params_.water_column_topic, "");
+  // detections stuff
+  privateNode_.param<std::string>("pointcloud_topic", params_.pointcloud_topic,  "cloud");
+  privateNode_.param<std::string>("bathymetric_topic",params_.bathymetric_topic, "bathymetric");
+  privateNode_.param<std::string>("detections_topic", params_.bathymetric_topic, "detections");
+
+  // Watercolumn stuff
+  privateNode_.param<std::string>("norbit_watercolumn_topic",
+                                  params_.norbit_watercolumn_topic, "");
+
+  privateNode_.param<std::string>("watercolumn_topic",
+                                  params_.norbit_watercolumn_topic, "");
+
 
   privateNode_.getParam("cmd_timeout", params_.cmd_timeout);
   privateNode_.getParam("startup_settings", params_.startup_settings);
   privateNode_.getParam("shutdown_settings", params_.shutdown_settings);
 }
 
-bool NorbitConnection::pubWC(){
-  return params_.water_column_topic!="";
-}
-
 void NorbitConnection::setupPubSub() {
 
   // publishers
-  detect_pub_ = node_.advertise<pcl::PointCloud<pcl::PointXYZI>>(
-      params_.pointcloud_topic, 1);
+  if (params_.pubPointcloud()){
+    cloud_pub_ = node_.advertise<pcl::PointCloud<pcl::PointXYZI>>(
+        params_.pointcloud_topic, 1);
+  }
 
-  bathy_pub_ = node_.advertise<norbit_msgs::BathymetricStamped>(
+  if (params_.pubDetections()){
+    detect_pub_ = node_.advertise<acoustic_msgs::MultibeamDetections>(
+          params_.detections_topic,1);
+  }
+
+  if (params_.pubBathymetric()){
+    bathy_pub_ = node_.advertise<norbit_msgs::BathymetricStamped>(
       params_.bathymetric_topic, 1);
+  }
 
-  if(pubWC()){
-    wc_pub_ = node_.advertise<norbit_msgs::WaterColumnStamped>(
-        params_.water_column_topic, 1);
+  if(params_.pubNorbitWC()){
+    norbit_wc_pub_ = node_.advertise<norbit_msgs::WaterColumnStamped>(
+        params_.norbit_watercolumn_topic, 1);
+  }
+
+  if(params_.pubMultibeamWC()){
+    wc_pub_ =  node_.advertise<acoustic_msgs::MultibeamWatercolumn>(
+          params_.watercolumn_topic, 1);
   }
 
   // SRVs
@@ -88,7 +104,7 @@ bool NorbitConnection::openConnections() {
     sockets_.bathymetric->connect(boost::asio::ip::tcp::endpoint(
         boost::asio::ip::address::from_string(params_.ip), params_.bathy_port));
 
-    if(pubWC()){
+    if(params_.pubWC()){
     sockets_.water_column = std::unique_ptr<boost::asio::ip::tcp::socket>(
         new boost::asio::ip::tcp::socket(io_service_));
 
@@ -112,7 +128,7 @@ bool NorbitConnection::openConnections() {
 void NorbitConnection::closeConnections() {
   sockets_.bathymetric->close();
   sockets_.bathymetric.reset();
-  if(pubWC()){
+  if(params_.pubWC()){
     sockets_.water_column->close();
     sockets_.water_column.reset();
   }
@@ -283,29 +299,49 @@ void NorbitConnection::bathyCallback(norbit_types::BathymetricData data) {
   detections->header.frame_id = params_.sensor_frame;
   ros::Time stamp(data.bathymetricHeader().time);
 
-  for (size_t i = 0; i < data.bathymetricHeader().N; i++) {
-    if (data.data(i).sample_number > 1) {
-      float range = float(data.data(i).sample_number) *
-                    data.bathymetricHeader().snd_velocity /
-                    (2.0 * data.bathymetricHeader().sample_rate);
-      pcl::PointXYZI p;
-      p.x = range * sinf(data.bathymetricHeader().tx_angle);
-      p.y = range * sinf(data.data(i).angle);
-      p.z = range * cosf(data.data(i).angle);
-      p.intensity = float(data.data(i).intensity) / 1e9f;
-      if ( data.data(i).quality_flag == 3) {
-        detections->push_back(p);
+  if (params_.pubPointcloud()){
+    for (size_t i = 0; i < data.bathymetricHeader().N; i++) {
+      if (data.data(i).sample_number > 1) {
+        float range = float(data.data(i).sample_number) *
+                      data.bathymetricHeader().snd_velocity /
+                      (2.0 * data.bathymetricHeader().sample_rate);
+        pcl::PointXYZI p;
+        p.x = range * sinf(data.bathymetricHeader().tx_angle);
+        p.y = range * sinf(data.data(i).angle);
+        p.z = range * cosf(data.data(i).angle);
+        p.intensity = float(data.data(i).intensity) / 1e9f;
+        if ( data.data(i).quality_flag == 3) {
+          detections->push_back(p);
+        }
       }
     }
+    pcl_conversions::toPCL(stamp, detections->header.stamp);
+    cloud_pub_.publish(detections);
   }
-  pcl_conversions::toPCL(stamp, detections->header.stamp);
-  detect_pub_.publish(detections);
-  bathy_pub_.publish(data.getRosMsg(params_.sensor_frame));
+
+  auto bathy_msg = data.getRosMsg(params_.sensor_frame);
+  if(params_.pubBathymetric())
+    bathy_pub_.publish(bathy_msg);
+
+  if(params_.pubDetections()){
+    acoustic_msgs::MultibeamDetections detections_msg;
+    norbit::conversions::bathymetric2MultibeamDetections(bathy_msg,detections_msg);
+    detect_pub_.publish(detections_msg);
+  }
+
   return;
 }
 
 void NorbitConnection::wcCallback(norbit_types::WaterColumnData data){
-  wc_pub_.publish(data.getRosMsg(params_.sensor_frame));
+  auto norb_wc_msg = data.getRosMsg(params_.sensor_frame);
+  if(params_.pubNorbitWC())
+    norbit_wc_pub_.publish(norb_wc_msg);
+
+  if(params_.pubMultibeamWC()){
+    acoustic_msgs::MultibeamWatercolumn::Ptr hydro_wc_msg(new acoustic_msgs::MultibeamWatercolumn);
+    norbit::conversions::norbitWC2HydroWC(norb_wc_msg,*hydro_wc_msg);
+    wc_pub_.publish(hydro_wc_msg);
+  }
 }
 
 void NorbitConnection::disconnectTimerCallback(const ros::TimerEvent& event){
