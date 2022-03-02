@@ -1,4 +1,4 @@
-ip:                 "192.168.53.67"            # the IP addres of your norbit
+ip:                 "10.1.10.61"            # the IP addres of your norbit
 cmd_port:           2209                    # the port the norbit listens for commands. normally/default 2209
 bathy_port:         2210                    # the port which bathymetry is published. normally/default 2210
 sensor_frame:       "norbit"                # the TF frame of the norbit

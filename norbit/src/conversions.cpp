@@ -88,7 +88,10 @@ namespace conversions {
 
     for(size_t i = 0; i<n ; i++){
       out.transmit_delay[i] = 0;
-      out.sample0[i] = uint32_t(in.water_column.water_column_header.t0);
+      if(in.water_column.water_column_header.t0<0)
+        out.sample0[i] = 0;
+      else
+        out.sample0[i] = uint32_t(in.water_column.water_column_header.t0);
       out.tx_angle[i] = in.water_column.water_column_header.tx_angle;
       out.tx_beamwidth[i] = in.water_column.water_column_header.tx_bw;
     }
