@@ -4,9 +4,8 @@ NS_HEAD
 
 namespace conversions {
 
-
   void bathymetric2SonarRanges(const norbit_msgs::BathymetricStamped & in,
-                               acoustic_msgs::SonarRanges & out){
+                               acoustic_msgs::SonarRanges & out) {
     auto num_beams = in.bathy.bahtymetric_header.N;
 
     out.header = in.header;
@@ -16,7 +15,7 @@ namespace conversions {
     double sos = in.bathy.bahtymetric_header.snd_velocity;
     out.ping_info.sound_speed = sos;
     out.ping_info.tx_beamwidths.resize(num_beams);
-    out.ping_info.rx_beamwidths.resize(0); // not reported
+    out.ping_info.rx_beamwidths.resize(0);  // not reported
 
     out.flags.resize(num_beams);
     out.transmit_delays.resize(num_beams);
@@ -32,11 +31,11 @@ namespace conversions {
       }
       out.transmit_delays[i] = 0;
       out.intensities[i] = in.bathy.detections[i].intensity;
-      double el = in.bathy.bahtymetric_header.tx_angle;
-      double az = in.bathy.detections[i].angle;
-      out.beam_unit_vec[i].x = sin(el);
-      out.beam_unit_vec[i].y = -1 * cos(el) * sin(az);
-      out.beam_unit_vec[i].z = cos(el) * cos(az);
+      double tx = in.bathy.bahtymetric_header.tx_angle;
+      double rx = in.bathy.detections[i].angle;
+      out.beam_unit_vec[i].x = cos(tx) * cos(rx);
+      out.beam_unit_vec[i].y = sin(rx);
+      out.beam_unit_vec[i].z = -1 * sin(tx);
       double twtt = in.bathy.detections[i].sample_number / in.bathy.bahtymetric_header.sample_rate;
       out.ranges[i]  = 0.5 * twtt * sos;
       out.ping_info.tx_beamwidths[i]  = in.bathy.bahtymetric_header.tx_bw;
@@ -45,7 +44,7 @@ namespace conversions {
   }
 
   void bathymetric2SonarDetections(const norbit_msgs::BathymetricStamped & in,
-                                   acoustic_msgs::SonarDetections & out){
+                                   acoustic_msgs::SonarDetections & out) {
     auto num_beams = in.bathy.bahtymetric_header.N;
 
     out.header = in.header;
@@ -53,7 +52,7 @@ namespace conversions {
     out.ping_info.frequency = in.bathy.bahtymetric_header.tx_freq;
     out.ping_info.sound_speed = in.bathy.bahtymetric_header.snd_velocity;
     out.ping_info.tx_beamwidths.resize(num_beams);
-    out.ping_info.rx_beamwidths.resize(num_beams); // not reported
+    out.ping_info.rx_beamwidths.resize(num_beams);  // not reported
 
     out.flags.resize(num_beams);
     out.two_way_travel_times.resize(num_beams);
