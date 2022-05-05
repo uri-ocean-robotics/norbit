@@ -33,9 +33,9 @@ namespace conversions {
       out.intensities[i] = in.bathy.detections[i].intensity;
       double tx = in.bathy.bahtymetric_header.tx_angle;
       double rx = in.bathy.detections[i].angle;
-      out.beam_unit_vec[i].x = cos(tx) * cos(rx);
+      out.beam_unit_vec[i].x = sin(tx);
       out.beam_unit_vec[i].y = sin(rx);
-      out.beam_unit_vec[i].z = -1 * sin(tx);
+      out.beam_unit_vec[i].z = cos(tx) * cos(rx);
       double twtt = in.bathy.detections[i].sample_number / in.bathy.bahtymetric_header.sample_rate;
       out.ranges[i]  = 0.5 * twtt * sos;
       out.ping_info.tx_beamwidths[i]  = in.bathy.bahtymetric_header.tx_bw;
