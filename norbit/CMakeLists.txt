@@ -11,6 +11,7 @@ project(${PACKAGE_NAME})  ## this package name is the name of the directory this
 ################################
 
 set(ROS_DEPENDS
+  acoustic_msgs
   ${PROJECT_NAME}_msgs
   roscpp
   std_msgs
