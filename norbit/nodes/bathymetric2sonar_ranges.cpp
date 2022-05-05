@@ -15,21 +15,20 @@ int main(int argc, char *argv[]) {
   rosbag::Bag out_bag;
   out_bag.open(argv[2], rosbag::bagmode::Write);
 
-  acoustic_msgs::MultibeamDetections::Ptr detections_msg(new acoustic_msgs::MultibeamDetections);
-  acoustic_msgs::MultibeamWatercolumn::Ptr wc_pointer(new acoustic_msgs::MultibeamWatercolumn);
+  acoustic_msgs::SonarDetections::Ptr detections_msg(new acoustic_msgs::SonarDetections);
+  acoustic_msgs::RawSonarImage::Ptr wc_pointer(new acoustic_msgs::RawSonarImage);
 
-  for(rosbag::MessageInstance const m: rosbag::View(in_bag))
-  {
+  for (rosbag::MessageInstance const m: rosbag::View(in_bag)) {
     norbit_msgs::BathymetricStamped::ConstPtr i = m.instantiate<norbit_msgs::BathymetricStamped>();
-    if (i != nullptr){
-      norbit::conversions::bathymetric2MultibeamDetections(*i,*detections_msg);
-      out_bag.write(m.getTopic()+"/mb_detections",m.getTime(),detections_msg);
+    if (i != nullptr) {
+      norbit::conversions::bathymetric2SonarDetections(*i, *detections_msg);
+      out_bag.write(m.getTopic()+"/mb_detections", m.getTime(), detections_msg);
     }
 
     norbit_msgs::WaterColumnStamped::ConstPtr wc = m.instantiate<norbit_msgs::WaterColumnStamped>();
-    if (wc != nullptr){
-      norbit::conversions::norbitWC2HydroWC(*wc,*wc_pointer);
-      out_bag.write(m.getTopic()+"/mb_wc",m.getTime(),wc_pointer);
+    if (wc != nullptr) {
+      norbit::conversions::norbitWC2RawSonarImage(*wc, *wc_pointer);
+      out_bag.write(m.getTopic()+"/mb_wc", m.getTime(), wc_pointer);
     }
     out_bag.write(m.getTopic(), m.getTime(), m);
   }

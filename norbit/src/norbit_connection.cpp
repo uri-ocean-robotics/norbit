@@ -58,7 +58,7 @@ void NorbitConnection::setupPubSub() {
   }
 
   if (params_.pubDetections()){
-    detect_pub_ = node_.advertise<acoustic_msgs::MultibeamDetections>(
+    detect_pub_ = node_.advertise<acoustic_msgs::SonarDetections>(
           params_.detections_topic,1);
   }
 
@@ -73,7 +73,7 @@ void NorbitConnection::setupPubSub() {
   }
 
   if(params_.pubMultibeamWC()){
-    wc_pub_ =  node_.advertise<acoustic_msgs::MultibeamWatercolumn>(
+    wc_pub_ =  node_.advertise<acoustic_msgs::RawSonarImage>(
           params_.watercolumn_topic, 1);
   }
 
@@ -324,8 +324,8 @@ void NorbitConnection::bathyCallback(norbit_types::BathymetricData data) {
     bathy_pub_.publish(bathy_msg);
 
   if(params_.pubDetections()){
-    acoustic_msgs::MultibeamDetections detections_msg;
-    norbit::conversions::bathymetric2MultibeamDetections(bathy_msg,detections_msg);
+    acoustic_msgs::SonarDetections detections_msg;
+    norbit::conversions::bathymetric2SonarDetections(bathy_msg,detections_msg);
     detect_pub_.publish(detections_msg);
   }
 
@@ -338,8 +338,8 @@ void NorbitConnection::wcCallback(norbit_types::WaterColumnData data){
     norbit_wc_pub_.publish(norb_wc_msg);
 
   if(params_.pubMultibeamWC()){
-    acoustic_msgs::MultibeamWatercolumn::Ptr hydro_wc_msg(new acoustic_msgs::MultibeamWatercolumn);
-    norbit::conversions::norbitWC2HydroWC(norb_wc_msg,*hydro_wc_msg);
+    acoustic_msgs::RawSonarImage::Ptr hydro_wc_msg(new acoustic_msgs::RawSonarImage);
+    norbit::conversions::norbitWC2RawSonarImage(norb_wc_msg, *hydro_wc_msg);
     wc_pub_.publish(hydro_wc_msg);
   }
 }
