@@ -2,9 +2,10 @@
 #define TYPE_CONVERER_H
 
 #include "defs.h"
+#include <acoustic_msgs/DetectionFlag.h>
+#include <acoustic_msgs/RawSonarImage.h>
 #include <acoustic_msgs/SonarRanges.h>
-#include <acoustic_msgs/MultibeamDetections.h>
-#include <acoustic_msgs/MultibeamWatercolumn.h>
+#include <acoustic_msgs/SonarDetections.h>
 
 #include <norbit_msgs/BathymetricStamped.h>
 #include <norbit_msgs/WaterColumnStamped.h>
@@ -17,8 +18,8 @@ namespace conversions {
    * \param out the acoustic_msgs::SonarRanges that will be overwritten with the converted Batymetric data
    */
   void bathymetric2SonarRanges(const norbit_msgs::BathymetricStamped & in, acoustic_msgs::SonarRanges & out);
-  void bathymetric2MultibeamDetections(const norbit_msgs::BathymetricStamped & in, acoustic_msgs::MultibeamDetections & out);
-  void norbitWC2HydroWC(const norbit_msgs::WaterColumnStamped & in, acoustic_msgs::MultibeamWatercolumn & out);
+  void bathymetric2SonarDetections(const norbit_msgs::BathymetricStamped & in, acoustic_msgs::SonarDetections & out);
+  void norbitWC2RawSonarImage(const norbit_msgs::WaterColumnStamped & in, acoustic_msgs::RawSonarImage & out);
 }
 NS_FOOT
 

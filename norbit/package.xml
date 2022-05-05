@@ -15,11 +15,12 @@
   <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
   <license>TODO</license>
 
-  <depend>catkin</depend>
+  <buildtool_depend>catkin</buildtool_depend>
 
   <build_depend>message_generation</build_depend>
   <exec_depend>message_runtime</exec_depend>
 
+  <depend>acoustic_msgs</depend>
   <depend>roscpp</depend>
   <depend>std_msgs</depend>
   <depend>pcl_conversions</depend>
