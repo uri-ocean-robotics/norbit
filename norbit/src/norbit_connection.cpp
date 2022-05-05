@@ -33,9 +33,10 @@ void NorbitConnection::updateParams() {
   privateNode_.param<int>("cmd_port", params_.cmd_port, 2209);
 
   // detections stuff
-  privateNode_.param<std::string>("pointcloud_topic", params_.pointcloud_topic,  "cloud");
+  privateNode_.param<std::string>("pointcloud_topic", params_.pointcloud_topic, "cloud");
   privateNode_.param<std::string>("bathymetric_topic",params_.bathymetric_topic, "bathymetric");
-  privateNode_.param<std::string>("detections_topic", params_.detections_topic,  "detections");
+  privateNode_.param<std::string>("detections_topic", params_.detections_topic, "detections");
+  privateNode_.param<std::string>("ranges_topic", params_.ranges_topic, "ranges");
 
   // Watercolumn stuff
   privateNode_.param<std::string>("norbit_watercolumn_topic",
@@ -60,6 +61,10 @@ void NorbitConnection::setupPubSub() {
   if (params_.pubDetections()){
     detect_pub_ = node_.advertise<acoustic_msgs::SonarDetections>(
           params_.detections_topic,1);
+  }
+
+  if (params_.pubRanges()) {
+    ranges_pub_ = node_.advertise<acoustic_msgs::SonarRanges>(params_.ranges_topic, 1);
   }
 
   if (params_.pubBathymetric()){
@@ -320,13 +325,20 @@ void NorbitConnection::bathyCallback(norbit_types::BathymetricData data) {
   }
 
   auto bathy_msg = data.getRosMsg(params_.sensor_frame);
-  if(params_.pubBathymetric())
+  if (params_.pubBathymetric()) {
     bathy_pub_.publish(bathy_msg);
+  }
 
-  if(params_.pubDetections()){
+  if (params_.pubDetections()) {
     acoustic_msgs::SonarDetections detections_msg;
-    norbit::conversions::bathymetric2SonarDetections(bathy_msg,detections_msg);
+    norbit::conversions::bathymetric2SonarDetections(bathy_msg, detections_msg);
     detect_pub_.publish(detections_msg);
+  }
+
+  if (params_.pubRanges()) {
+    acoustic_msgs::SonarRanges ranges_msg;
+    norbit::conversions::bathymetric2SonarRanges(bathy_msg, ranges_msg);
+    ranges_pub_.publish(ranges_msg);
   }
 
   return;

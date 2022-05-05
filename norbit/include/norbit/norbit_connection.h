@@ -35,6 +35,7 @@ struct ConnectionParams {
   std::string pointcloud_topic;
   std::string bathymetric_topic;
   std::string detections_topic;
+  std::string ranges_topic;
   std::string norbit_watercolumn_topic;
   std::string watercolumn_topic;
   double cmd_timeout;
@@ -63,9 +64,17 @@ struct ConnectionParams {
   /*!
    * \brief do we need to publish acoustic_msgs multibeam detections data?
    */
-  bool pubDetections(){
+  bool pubDetections() {
     return pub(detections_topic);
   }
+
+  /*!
+   * \brief do we need to publish norbit_msgs range data?
+   */
+  bool pubRanges() {
+    return pub(ranges_topic);
+  }
+
 
   /*!
    * \brief do we need to publish ANY Watercolum data?
@@ -153,6 +162,7 @@ protected:
   ros::NodeHandle privateNode_;
   ros::Publisher cloud_pub_;
   ros::Publisher detect_pub_;
+  ros::Publisher ranges_pub_;
   ros::Publisher bathy_pub_;
   ros::Publisher norbit_wc_pub_;
   ros::Publisher wc_pub_;
