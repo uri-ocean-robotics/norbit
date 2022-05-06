@@ -14,8 +14,9 @@ namespace conversions {
     // NOTE(lindzey): Kris -- do you want to correct spelling in the message field?
     double sos = in.bathy.bahtymetric_header.snd_velocity;
     out.ping_info.sound_speed = sos;
+    // TODO(lindzey): We need to figure out whether "n/a" is all-zeros or an empty array.
     out.ping_info.tx_beamwidths.resize(num_beams);
-    out.ping_info.rx_beamwidths.resize(0);  // not reported
+    out.ping_info.rx_beamwidths.resize(num_beams);
 
     out.flags.resize(num_beams);
     out.transmit_delays.resize(num_beams);
@@ -38,7 +39,8 @@ namespace conversions {
       out.beam_unit_vec[i].z = cos(tx) * cos(rx);
       double twtt = in.bathy.detections[i].sample_number / in.bathy.bahtymetric_header.sample_rate;
       out.ranges[i]  = 0.5 * twtt * sos;
-      out.ping_info.tx_beamwidths[i]  = in.bathy.bahtymetric_header.tx_bw;
+      // bw is bandwidth not beamwidth
+      // out.ping_info.tx_beamwidths[i]  = in.bathy.bahtymetric_header.tx_bw;
     }
     return;
   }
@@ -51,7 +53,7 @@ namespace conversions {
 
     out.ping_info.frequency = in.bathy.bahtymetric_header.tx_freq;
     out.ping_info.sound_speed = in.bathy.bahtymetric_header.snd_velocity;
-    out.ping_info.tx_beamwidths.resize(num_beams);
+    out.ping_info.tx_beamwidths.resize(num_beams);  // not reported
     out.ping_info.rx_beamwidths.resize(num_beams);  // not reported
 
     out.flags.resize(num_beams);
@@ -72,7 +74,8 @@ namespace conversions {
       out.intensities[i] = in.bathy.detections[i].intensity;
       out.tx_angles[i] = in.bathy.bahtymetric_header.tx_angle;
       out.rx_angles[i] = in.bathy.detections[i].angle;
-      out.ping_info.tx_beamwidths[i] = in.bathy.bahtymetric_header.tx_bw;
+      // tx_bw is bandwidth, not beamwidth (e.g. it's reported as 80k)
+      // out.ping_info.tx_beamwidths[i] = in.bathy.bahtymetric_header.tx_bw;
     }
     return;
   }
@@ -87,7 +90,7 @@ namespace conversions {
     out.ping_info.frequency = in.water_column.water_column_header.tx_freq;
     out.ping_info.sound_speed = in.water_column.water_column_header.snd_velocity;
     out.ping_info.tx_beamwidths.resize(num_beams);
-    // out.ping_info.rx_beamwidths =
+    out.ping_info.rx_beamwidths.resize(num_beams);
 
     out.sample_rate = in.water_column.water_column_header.sample_rate;
     out.samples_per_beam = num_samples;
@@ -104,7 +107,8 @@ namespace conversions {
       out.tx_delays[i] = 0;
       out.tx_angles[i] = in.water_column.water_column_header.tx_angle;
       out.rx_angles[i] = in.water_column.beam_directions[i];
-      out.ping_info.tx_beamwidths[i] = in.water_column.water_column_header.tx_bw;
+      // tx_bw is bandwidth not beamwidth
+      // out.ping_info.tx_beamwidths[i] = in.water_column.water_column_header.tx_bw;
     }
 
     // out.image.is_bigendian
