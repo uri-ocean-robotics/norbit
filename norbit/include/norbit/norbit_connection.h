@@ -21,6 +21,7 @@
 #include "norbit_msgs/NorbitCmd.h"
 #include "norbit_msgs/SetPower.h"
 #include "norbit_types/message.h"
+#include "conversions.h"
 
 // using namespace boost::asio;
 // using ip::tcp;
@@ -33,10 +34,68 @@ struct ConnectionParams {
   std::string sensor_frame;
   std::string pointcloud_topic;
   std::string bathymetric_topic;
-  std::string water_column_topic;
+  std::string detections_topic;
+  std::string ranges_topic;
+  std::string norbit_watercolumn_topic;
+  std::string watercolumn_topic;
   double cmd_timeout;
   std::map<std::string, std::string> startup_settings;
   std::map<std::string, std::string> shutdown_settings;
+
+  bool pub(std::string topic){
+    return topic!="";
+  }
+
+  /*!
+   * \brief do we need to publish a naieve projected pointcloud?
+   */
+  bool pubPointcloud(){
+    return pub(pointcloud_topic);
+  }
+
+  /*!
+   * \brief do we need to publish norbit_msgs batymeteric data?
+   */
+  bool pubBathymetric(){
+    return pub(bathymetric_topic);
+  }
+
+
+  /*!
+   * \brief do we need to publish acoustic_msgs multibeam detections data?
+   */
+  bool pubDetections() {
+    return pub(detections_topic);
+  }
+
+  /*!
+   * \brief do we need to publish norbit_msgs range data?
+   */
+  bool pubRanges() {
+    return pub(ranges_topic);
+  }
+
+
+  /*!
+   * \brief do we need to publish ANY Watercolum data?
+   */
+  bool pubWC(){
+    return pub(norbit_watercolumn_topic) || pub(watercolumn_topic);
+  }
+
+  /*!
+   * \brief do we need to publish norbit_msgs watercolum data?
+   */
+  bool pubNorbitWC(){
+    return pub(norbit_watercolumn_topic);
+  }
+
+  /*!
+   * \brief do we need to publish acoustic_msgs watercolumn data?
+   */
+  bool pubMultibeamWC(){
+    return pub(watercolumn_topic);
+  }
 };
 
 class NorbitConnection {
@@ -86,7 +145,6 @@ public:
   static bool shutdown_;
 
 protected:
-  bool pubWC();
   struct {
     std::unique_ptr<boost::asio::ip::tcp::socket> bathymetric;
     std::unique_ptr<boost::asio::ip::tcp::socket> water_column;
@@ -102,8 +160,11 @@ protected:
   ConnectionParams params_;
   ros::NodeHandle node_;
   ros::NodeHandle privateNode_;
+  ros::Publisher cloud_pub_;
   ros::Publisher detect_pub_;
+  ros::Publisher ranges_pub_;
   ros::Publisher bathy_pub_;
+  ros::Publisher norbit_wc_pub_;
   ros::Publisher wc_pub_;
   std::deque<std::string> cmd_resp_queue_;
   ros::Rate loop_rate;
