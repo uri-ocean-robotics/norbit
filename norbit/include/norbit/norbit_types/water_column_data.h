@@ -12,7 +12,7 @@ namespace norbit_types {
     WaterColumnData();
     size_t dataSize();
     void setBits(std::shared_ptr<norbit_msgs::CommonHeader> comm_hdr, std::shared_ptr<char> bits);
-//    norbit_msgs::BahtymetricHeader & bathymetricHeader(){return *bahtymetric_header_;}
+//    norbit_msgs::BathymetricHeader & bathymetricHeader(){return *bathymetric_header_;}
 //    norbit_msgs::BathymetricPoint & data(size_t i){return data_[i];}
     norbit_msgs::WaterColumnStamped getRosMsg(std::string frame_id);
   protected:

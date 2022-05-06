@@ -1,5 +1,5 @@
 CommonHeader common_header
 
-BahtymetricHeader bahtymetric_header
+BathymetricHeader bathymetric_header
 
 BathymetricPoint[] detections
