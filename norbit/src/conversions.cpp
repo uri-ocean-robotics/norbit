@@ -96,9 +96,6 @@ namespace conversions {
     } else {
       out.sample0 = uint32_t(in.water_column.water_column_header.t0);
     }
-    // NOTE(lindzey): RawSonarImage doesn't currently have a num_beams field;
-    //     discussion in the merge request was leaning towards adding it.
-    // out.num_beams = num_beams;
 
     out.tx_delays.resize(num_beams);
     out.tx_angles.resize(num_beams);
@@ -112,6 +109,7 @@ namespace conversions {
 
     // out.image.is_bigendian
     out.image.dtype = in.water_column.water_column_header.dtype;
+    out.image.num_beams = num_beams;
     out.image.data = in.water_column.pixel_data;
 
     return;
