@@ -111,7 +111,7 @@ namespace conversions {
       // out.ping_info.tx_beamwidths[i] = in.water_column.water_column_header.tx_bw;
     }
 
-    // out.image.is_bigendian
+    out.image.is_bigendian = false;
     out.image.dtype = in.water_column.water_column_header.dtype;
     out.image.num_beams = num_beams;
     out.image.data = in.water_column.pixel_data;

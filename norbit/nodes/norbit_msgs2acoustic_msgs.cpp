@@ -16,6 +16,7 @@ int main(int argc, char *argv[]) {
   out_bag.open(argv[2], rosbag::bagmode::Write);
 
   acoustic_msgs::SonarDetections::Ptr detections_msg(new acoustic_msgs::SonarDetections);
+  acoustic_msgs::SonarRanges::Ptr ranges_msg(new acoustic_msgs::SonarRanges);
   acoustic_msgs::RawSonarImage::Ptr wc_pointer(new acoustic_msgs::RawSonarImage);
 
   for (rosbag::MessageInstance const m: rosbag::View(in_bag)) {
@@ -23,7 +24,11 @@ int main(int argc, char *argv[]) {
     if (i != nullptr) {
       norbit::conversions::bathymetric2SonarDetections(*i, *detections_msg);
       out_bag.write(m.getTopic()+"/mb_detections", m.getTime(), detections_msg);
+
+      norbit::conversions::bathymetric2SonarRanges(*i, *ranges_msg);
+      out_bag.write(m.getTopic()+"/sonar_ranges", m.getTime(), ranges_msg);
     }
+
 
     norbit_msgs::WaterColumnStamped::ConstPtr wc = m.instantiate<norbit_msgs::WaterColumnStamped>();
     if (wc != nullptr) {
