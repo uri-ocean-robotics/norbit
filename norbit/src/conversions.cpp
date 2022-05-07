@@ -6,13 +6,13 @@ namespace conversions {
 
   void bathymetric2SonarRanges(const norbit_msgs::BathymetricStamped & in,
                                acoustic_msgs::SonarRanges & out) {
-    auto num_beams = in.bathy.bahtymetric_header.N;
+    auto num_beams = in.bathy.bathymetric_header.N;
 
     out.header = in.header;
 
-    out.ping_info.frequency = in.bathy.bahtymetric_header.tx_freq;
+    out.ping_info.frequency = in.bathy.bathymetric_header.tx_freq;
     // NOTE(lindzey): Kris -- do you want to correct spelling in the message field?
-    double sos = in.bathy.bahtymetric_header.snd_velocity;
+    double sos = in.bathy.bathymetric_header.snd_velocity;
     out.ping_info.sound_speed = sos;
     // TODO(lindzey): We need to figure out whether "n/a" is all-zeros or an empty array.
     out.ping_info.tx_beamwidths.resize(num_beams);
@@ -32,27 +32,27 @@ namespace conversions {
       }
       out.transmit_delays[i] = 0;
       out.intensities[i] = in.bathy.detections[i].intensity;
-      double tx = in.bathy.bahtymetric_header.tx_angle;
+      double tx = in.bathy.bathymetric_header.tx_angle;
       double rx = in.bathy.detections[i].angle;
       out.beam_unit_vec[i].x = sin(tx);
       out.beam_unit_vec[i].y = sin(rx);
       out.beam_unit_vec[i].z = cos(tx) * cos(rx);
-      double twtt = in.bathy.detections[i].sample_number / in.bathy.bahtymetric_header.sample_rate;
+      double twtt = in.bathy.detections[i].sample_number / in.bathy.bathymetric_header.sample_rate;
       out.ranges[i]  = 0.5 * twtt * sos;
       // bw is bandwidth not beamwidth
-      // out.ping_info.tx_beamwidths[i]  = in.bathy.bahtymetric_header.tx_bw;
+      // out.ping_info.tx_beamwidths[i]  = in.bathy.bathymetric_header.tx_bw;
     }
     return;
   }
 
   void bathymetric2SonarDetections(const norbit_msgs::BathymetricStamped & in,
                                    acoustic_msgs::SonarDetections & out) {
-    auto num_beams = in.bathy.bahtymetric_header.N;
+    auto num_beams = in.bathy.bathymetric_header.N;
 
     out.header = in.header;
 
-    out.ping_info.frequency = in.bathy.bahtymetric_header.tx_freq;
-    out.ping_info.sound_speed = in.bathy.bahtymetric_header.snd_velocity;
+    out.ping_info.frequency = in.bathy.bathymetric_header.tx_freq;
+    out.ping_info.sound_speed = in.bathy.bathymetric_header.snd_velocity;
     out.ping_info.tx_beamwidths.resize(num_beams);  // not reported
     out.ping_info.rx_beamwidths.resize(num_beams);  // not reported
 
@@ -69,13 +69,13 @@ namespace conversions {
         out.flags[i].flag = acoustic_msgs::DetectionFlag::DETECT_BAD_SONAR;
       }
 
-      out.two_way_travel_times[i] = in.bathy.detections[i].sample_number / in.bathy.bahtymetric_header.sample_rate;
+      out.two_way_travel_times[i] = in.bathy.detections[i].sample_number / in.bathy.bathymetric_header.sample_rate;
       out.tx_delays[i] = 0;
       out.intensities[i] = in.bathy.detections[i].intensity;
-      out.tx_angles[i] = in.bathy.bahtymetric_header.tx_angle;
+      out.tx_angles[i] = in.bathy.bathymetric_header.tx_angle;
       out.rx_angles[i] = in.bathy.detections[i].angle;
       // tx_bw is bandwidth, not beamwidth (e.g. it's reported as 80k)
-      // out.ping_info.tx_beamwidths[i] = in.bathy.bahtymetric_header.tx_bw;
+      // out.ping_info.tx_beamwidths[i] = in.bathy.bathymetric_header.tx_bw;
     }
     return;
   }
