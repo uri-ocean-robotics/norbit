@@ -113,7 +113,7 @@ namespace conversions {
 
     out.image.is_bigendian = false;
     out.image.dtype = in.water_column.water_column_header.dtype;
-    out.image.num_beams = num_beams;
+    out.image.beam_count = num_beams;
     out.image.data = in.water_column.pixel_data;
 
     return;
