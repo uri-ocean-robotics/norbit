@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import rosbag
+import sys
 import argparse
 from norbit_msgs.msg import BathymetricStamped
 

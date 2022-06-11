@@ -96,8 +96,9 @@ void NorbitConnection::setupPubSub() {
 }
 
 void NorbitConnection::waitForConnections(){
-  while(!openConnections());
-  ROS_INFO("Connection Estabilished");
+  while(!shutdown_ && !openConnections());
+
+  ROS_INFO_COND(!shutdown_ , "Connection Estabilished");
 }
 
 
@@ -125,7 +126,8 @@ bool NorbitConnection::openConnections() {
   }
   catch (const boost::exception& ex) {
       std::string info = boost::diagnostic_information(ex);
-      ROS_ERROR("unable to connect to sonar: %s",info.c_str());
+      ROS_WARN_THROTTLE(10.0,"Unable to connect to sonar.  Will continue trying.");
+      //ROS_ERROR("unable to connect to sonar: %s",info.c_str());
       return false;
   }
 }
@@ -389,13 +391,15 @@ void NorbitConnection::spin_once() {
 void NorbitConnection::spin() {
 
   do {
-    spin_once();
+
     if(shutdown_){
       ROS_WARN("[%s] shutting down:  executing shutdown parameters",ros::this_node::getName().c_str());
       for (auto param : params_.shutdown_settings) {
         sendCmd(param.first, param.second);
         ros::shutdown();
       }
+    }else{
+      spin_once();
     }
   }while (!shutdown_);
 
