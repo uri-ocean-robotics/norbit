@@ -7,7 +7,8 @@ float64 time             # Ping timestamp, unix time at
 
 uint32  DTYPE_UINT8 = 0
 uint32  DTYPE_INT8 = 1
-uint32  DTYPE_INT16 = 2
+uint32  DTYPE_UINT16 = 2
+uint32  DTYPE_INT16 = 3
 uint32  DTYPE_UINT32 = 4
 uint32  DTYPE_INT32 = 5
 uint32  DTYPE_UINT64 = 6

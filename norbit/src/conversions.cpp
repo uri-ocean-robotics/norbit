@@ -112,7 +112,39 @@ namespace conversions {
     }
 
     out.image.is_bigendian = false;
-    out.image.dtype = in.water_column.water_column_header.dtype;
+    switch (in.water_column.water_column_header.dtype) {
+      case norbit_msgs::WaterColumnHeader::DTYPE_UINT8:
+        out.image.dtype = acoustic_msgs::SonarImageData::DTYPE_UINT8;
+        break;
+      case norbit_msgs::WaterColumnHeader::DTYPE_INT8:
+        out.image.dtype = acoustic_msgs::SonarImageData::DTYPE_INT8;
+        break;
+      case norbit_msgs::WaterColumnHeader::DTYPE_UINT16:
+        out.image.dtype = acoustic_msgs::SonarImageData::DTYPE_UINT16;
+        break;
+      case norbit_msgs::WaterColumnHeader::DTYPE_INT16:
+        out.image.dtype = acoustic_msgs::SonarImageData::DTYPE_INT16;
+        break;
+      case norbit_msgs::WaterColumnHeader::DTYPE_UINT32:
+        out.image.dtype = acoustic_msgs::SonarImageData::DTYPE_UINT32;
+        break;
+      case norbit_msgs::WaterColumnHeader::DTYPE_INT32:
+        out.image.dtype = acoustic_msgs::SonarImageData::DTYPE_INT32;
+        break;
+      case norbit_msgs::WaterColumnHeader::DTYPE_UINT64:
+        out.image.dtype = acoustic_msgs::SonarImageData::DTYPE_UINT64;
+        break;
+      case norbit_msgs::WaterColumnHeader::DTYPE_INT64:
+        out.image.dtype = acoustic_msgs::SonarImageData::DTYPE_INT64;
+        break;
+      case norbit_msgs::WaterColumnHeader::DTYPE_FLOAT32:
+        out.image.dtype = acoustic_msgs::SonarImageData::DTYPE_FLOAT32;
+        break;
+      case norbit_msgs::WaterColumnHeader::DTYPE_FLOAT64:
+        out.image.dtype = acoustic_msgs::SonarImageData::DTYPE_FLOAT64;
+        break;
+    }
+    //out.image.dtype = in.water_column.water_column_header.dtype;
     out.image.beam_count = num_beams;
     out.image.data = in.water_column.pixel_data;
 
