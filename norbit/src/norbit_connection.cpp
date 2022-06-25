@@ -27,7 +27,7 @@ NorbitConnection::~NorbitConnection() {}
 void NorbitConnection::updateParams() {
   privateNode_.param<std::string>("sensor_frame", params_.sensor_frame,
                                   "norbit");
-  privateNode_.param<std::string>("ip", params_.ip, "10.1.10.61");
+  privateNode_.param<std::string>("ip", params_.ip, "10.1.70.133");
   privateNode_.param<int>("bathy_port", params_.bathy_port, 2210);
   privateNode_.param<int>("water_column_port", params_.water_column_port, 2211);
   privateNode_.param<int>("cmd_port", params_.cmd_port, 2209);
@@ -40,10 +40,10 @@ void NorbitConnection::updateParams() {
 
   // Watercolumn stuff
   privateNode_.param<std::string>("norbit_watercolumn_topic",
-                                  params_.norbit_watercolumn_topic, "");
+                                  params_.norbit_watercolumn_topic, "water_column");
 
   privateNode_.param<std::string>("watercolumn_topic",
-                                  params_.watercolumn_topic, "watercolumn");
+                                  params_.watercolumn_topic, "water_column/mb_wc");
 
   privateNode_.getParam("cmd_timeout", params_.cmd_timeout);
   privateNode_.getParam("startup_settings", params_.startup_settings);

@@ -14,6 +14,9 @@ namespace norbit_types {
       case norbit_msgs::WaterColumnHeader::DTYPE_INT8:
         size=1;
         break;
+      case norbit_msgs::WaterColumnHeader::DTYPE_UINT16:
+        size=2;
+        break;
       case norbit_msgs::WaterColumnHeader::DTYPE_INT16:
         size=2;
         break;
