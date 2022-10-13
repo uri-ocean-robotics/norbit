@@ -1,6 +1,6 @@
 # ROS Norbit Multibeam sonar driver
 
-This driver is designed interface directly with a norbit sonar compatible with the [Norbit DFD](https://raw.githubusercontent.com/uri-ocean-robotics/norbit/master/norbit/doc/TN-180196-1D-WBMS_DFD_External.pdf?token=GHSAT0AAAAAABZI2NASRGSDYGYNFR7TZINCY2IJH6Q)
+This driver is designed interface directly with a Norbit sonar compatible with the [Norbit DFD](https://raw.githubusercontent.com/uri-ocean-robotics/norbit/master/norbit/doc/TN-180196-1D-WBMS_DFD_External.pdf?token=GHSAT0AAAAAABZI2NASRGSDYGYNFR7TZINCY2IJH6Q)
 
 ![image](https://user-images.githubusercontent.com/23006525/195664892-8db3c42e-3afb-4a89-9e61-84f3f9fd1ff8.png)
 
@@ -15,7 +15,7 @@ First clone the package to your ros workspaces source directory
 git clone https://github.com/uri-ocean-robotics/norbit.git
 ```
 
-This package uses the hydrographic_msgs package. Clone them to your workspace's src dircetory
+This package uses the hydrographic_msgs package. Clone them to your workspace's src directory
 
 ```
 git clone https://github.com/apl-ocean-engineering/hydrographic_msgs
@@ -32,7 +32,7 @@ from your catkin workspaces root directory run
 catkin_make
 ```
 
-## Runing the package ##
+## Running the package ##
 
 An example launch file can be found in the norbit/launch directory.   An example parameter configuration yaml with internal documentation describing all parameters can be found in the norbit/config directory.   
 
@@ -85,7 +85,7 @@ shutdown_settings:
 
 ## Issuing Norbit commands via ROS services ##
 
-Commans can be via a rosservice call.  This grants control of the unit without the Norbit GUI.  These services can also be called from other ROS nodes such as mission planners.
+Comands can be via a rosservice call.  This grants control of the unit without the Norbit GUI.  These services can also be called from other ROS nodes such as mission planners.
 
 You can also call these commands from the terminal using the ROS service command line utility.  See the example below that tells the unit to start pinging:
 
@@ -96,3 +96,10 @@ val: '1'"
 ```
 
 For a list of available commands reffer to section 7 of the [Norbit DFD](https://raw.githubusercontent.com/uri-ocean-robotics/norbit/master/norbit/doc/TN-180196-1D-WBMS_DFD_External.pdf?token=GHSAT0AAAAAABZI2NATU3KXJNE6RCIBDIQYY2IKYOQ)
+
+
+## Contributing ##
+
+If you wish to make a contribution to this package please make a fork from the devel branch. Once your modification is completed, make a pull request back to the devel branch.  If it is accepted your modifications will be available in the master branch (default branch) after the next release.
+
+Please review and adhere to the style guidelines on the [URI Ocean Robotics Development Conventions](https://github.com/uri-ocean-robotics/development-conventions).   
