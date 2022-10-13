@@ -73,3 +73,16 @@ shutdown_settings:
     set_power:      "0"
 ```
 
+## Issuing Norbit commands via ROS services ##
+
+Commans can be via a rosservice call.  This grants control of the unit without the Norbit GUI.  These services can also be called from other ROS nodes such as mission planners.
+
+You can also call these commands from the terminal using the ROS service command line utility.  See the example below that tells the unit to start pinging:
+
+```
+rosservice call <norbit node name including namespace> "cmd: 'set_power'
+val: '1'" 
+
+```
+
+For a list of available commands reffer to section 7 of the [Norbit DFD](https://raw.githubusercontent.com/uri-ocean-robotics/norbit/master/norbit/doc/TN-180196-1D-WBMS_DFD_External.pdf?token=GHSAT0AAAAAABZI2NATU3KXJNE6RCIBDIQYY2IKYOQ)
