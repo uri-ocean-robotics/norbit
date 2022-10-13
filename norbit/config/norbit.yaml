@@ -6,7 +6,7 @@ pointcloud_topic:   "cloud"                 # the topic you want to send your po
 bathymetric_topic:  "bathymetric"           # norbit_msgs raw bathymetric topic
 detections_topic:   "detections"            # hydrographic_msgs detection topic
 
-#watercolumn stuff If both are left blank WC data will not be requested from the unit
+# watercolumn stuff If both are left blank WC data will not be requested from the unit
 norbit_watercolumn_topic: "watercolumn_raw" # the norbit_msgs watercolum message topic.  not published if blank.
 watercolumn_topic:  "watercolumn"           # the hydrographic_msgs watercolum topic.  not published if blank.
 cmd_timeout:        0.5                     # how long should you wait for a command response before you consider it timed out
@@ -14,7 +14,6 @@ startup_settings:                           # the norbit settings to be applied 
     set_power:        "1"
     set_gate_mode:    "1"
     set_range:        ".5 30"
-    zbad_setting:     "doh"
     set_time_source:  "1"                    # 0: IRIG-B 1:NTP 2: IRIG-B (inverted) 3: NTP+PPS(pos) 4: NTP+PPS(neg) 5: ZDA+PPS(pos) 6:ZDA+PPS(neg) 7:ZDA 8:Free run (time since startup)
     #set_ntp_server:   "timepi.aura"
 

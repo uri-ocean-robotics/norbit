@@ -1,8 +1,15 @@
 <?xml version="1.0" ?>
 <launch>
-    <node name="norbit_node"
-    pkg="norbit"
-    type="norbit_node" output="screen">
-        <rosparam command="load" file="$(find norbit)/config/bench_test.yaml" />
-    </node>
+  <arg name="vessel_ns"        default = "roship" />
+  <arg name="ip"/>
+  <arg name="sensor_frame"     default = "norbit" />
+    <group ns="$(arg vessel_ns)/perception/sensors/norbit" >
+        <node name="norbit_node"
+        pkg="norbit"
+        type="norbit_node" output="screen" respawn="true">
+          <param name="ip" value="$(arg ip)"/>
+          <rosparam command="load" file="$(find norbit)/config/norbit.yaml" />
+          <param name="sensor_frame" value="$(arg sensor_frame)"/>
+        </node>
+    </group>
 </launch>
