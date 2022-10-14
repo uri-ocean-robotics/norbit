@@ -2,7 +2,7 @@
 
 This driver is designed interface directly with a Norbit sonar compatible with the [Norbit DFD](https://raw.githubusercontent.com/uri-ocean-robotics/norbit/master/norbit/doc/TN-180196-1D-WBMS_DFD_External.pdf?token=GHSAT0AAAAAABZI2NASRGSDYGYNFR7TZINCY2IJH6Q)
 
-![image](https://user-images.githubusercontent.com/23006525/195664892-8db3c42e-3afb-4a89-9e61-84f3f9fd1ff8.png)
+![image](docs/media/norbit_demo.gif)
 
 ## Installation ##
 
@@ -100,6 +100,4 @@ For a list of available commands reffer to section 7 of the [Norbit DFD](https:/
 
 ## Contributing ##
 
-If you wish to make a contribution to this package please make a fork from the devel branch. Once your modification is completed, make a pull request back to the devel branch.  If it is accepted your modifications will be available in the master branch (default branch) after the next release.
-
-Please review and adhere to the style guidelines on the [URI Ocean Robotics Development Conventions](https://github.com/uri-ocean-robotics/development-conventions).   
+Thank you for considering a contribution to this package.   Please review our [CONTRIBUTING](CONTRIBUTING.md) guidelines to get started.
