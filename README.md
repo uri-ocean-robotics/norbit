@@ -100,6 +100,4 @@ For a list of available commands reffer to section 7 of the [Norbit DFD](https:/
 
 ## Contributing ##
 
-If you wish to make a contribution to this package please make a fork from the devel branch. Once your modification is completed, make a pull request back to the devel branch.  If it is accepted your modifications will be available in the master branch (default branch) after the next release.
-
-Please review and adhere to the style guidelines on the [URI Ocean Robotics Development Conventions](https://github.com/uri-ocean-robotics/development-conventions).   
+Thank you for considering a contribution to this package.   Please review our [CONTRIBUTING](CONTRIBUTING.md) guidelines to get started.
