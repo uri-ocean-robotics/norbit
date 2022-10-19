@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ROS Norbit Multibeam sonar driver &mdash; Norbit MBES ROS Driver  documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/tooltipster.custom.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/tooltipster.bundle.min.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/tooltipster-sideTip-shadow.min.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/tooltipster-sideTip-punk.min.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/tooltipster-sideTip-noir.min.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/tooltipster-sideTip-light.min.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/tooltipster-sideTip-borderless.min.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/micromodal.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/sphinx_rtd_theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+        <script src="_static/js/hoverxref.js"></script>
+        <script src="_static/js/tooltipster.bundle.min.js"></script>
+        <script src="_static/js/micromodal.min.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="#" class="icon icon-home"> Norbit MBES ROS Driver
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">ROS Norbit Multibeam sonar driver</a><ul>
+<li><a class="reference internal" href="#installation">Installation</a><ul>
+<li><a class="reference internal" href="#begin-by-getting-the-package-the-dependencies">Begin by getting the package the dependencies</a></li>
+<li><a class="reference internal" href="#compile-the-package">Compile the package</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#running-the-package">Running the package</a></li>
+<li><a class="reference internal" href="#additional-utilities">Additional Utilities</a></li>
+<li><a class="reference internal" href="#parameters">Parameters</a></li>
+<li><a class="reference internal" href="#issuing-norbit-commands-via-ros-services">Issuing Norbit commands via ROS services</a></li>
+<li><a class="reference internal" href="#contributing">Contributing</a></li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">Norbit MBES ROS Driver</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home"></a> &raquo;</li>
+      <li>ROS Norbit Multibeam sonar driver</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/index.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="toctree-wrapper compound">
+</div>
+<div class="tex2jax_ignore mathjax_ignore section" id="ros-norbit-multibeam-sonar-driver">
+<h1>ROS Norbit Multibeam sonar driver<a class="headerlink" href="#ros-norbit-multibeam-sonar-driver" title="Permalink to this heading"></a></h1>
+<p>This driver is designed interface directly with a Norbit sonar compatible with the <a class="reference external" href="https://raw.githubusercontent.com/uri-ocean-robotics/norbit/master/norbit/doc/TN-180196-1D-WBMS_DFD_External.pdf?token=GHSAT0AAAAAABZI2NASRGSDYGYNFR7TZINCY2IJH6Q">Norbit DFD</a></p>
+<p><img alt="image" src="docs/media/norbit_demo.gif" /></p>
+<div class="section" id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this heading"></a></h2>
+<p>This project can be installed like any other ROS1 source package</p>
+<div class="section" id="begin-by-getting-the-package-the-dependencies">
+<h3>Begin by getting the package the dependencies<a class="headerlink" href="#begin-by-getting-the-package-the-dependencies" title="Permalink to this heading"></a></h3>
+<p>First clone the package to your ros workspaces source directory</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">uri</span><span class="o">-</span><span class="n">ocean</span><span class="o">-</span><span class="n">robotics</span><span class="o">/</span><span class="n">norbit</span><span class="o">.</span><span class="n">git</span>
+</pre></div>
+</div>
+<p>This package uses the hydrographic_msgs package. Clone them to your workspace’s src directory</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">apl</span><span class="o">-</span><span class="n">ocean</span><span class="o">-</span><span class="n">engineering</span><span class="o">/</span><span class="n">hydrographic_msgs</span>
+</pre></div>
+</div>
+<p>The rest of the dependencies can be acquired through rosdep.   Run the follwing command from your workspaces root directory.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">rosdep</span> <span class="n">install</span> <span class="o">--</span><span class="n">from</span><span class="o">-</span><span class="n">paths</span> <span class="n">src</span> <span class="o">--</span><span class="n">ignore</span><span class="o">-</span><span class="n">src</span> <span class="o">-</span><span class="n">r</span> <span class="o">-</span><span class="n">y</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="compile-the-package">
+<h3>Compile the package<a class="headerlink" href="#compile-the-package" title="Permalink to this heading"></a></h3>
+<p>from your catkin workspaces root directory run</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">catkin_make</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="running-the-package">
+<h2>Running the package<a class="headerlink" href="#running-the-package" title="Permalink to this heading"></a></h2>
+<p>An example launch file can be found in the norbit/launch directory.   An example parameter configuration yaml with internal documentation describing all parameters can be found in the norbit/config directory.</p>
+<p>To run the norbit with the parameters speified in the aforementioned yaml config file simply run</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">roslaunch</span> <span class="n">norbit</span> <span class="n">norbit</span><span class="o">.</span><span class="n">launch</span> <span class="n">ip</span><span class="p">:</span><span class="o">&lt;</span><span class="n">your</span> <span class="n">unit</span><span class="s1">&#39;s ip address&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="additional-utilities">
+<h2>Additional Utilities<a class="headerlink" href="#additional-utilities" title="Permalink to this heading"></a></h2>
+<p>There are a few other packages associated with the <a class="reference external" href="https://github.com/apl-ocean-engineering/hydrographic_msgs">hydrographic_msgs</a> standards that may be useful for processing and visualizing data generated by this driver</p>
+<p><strong><a class="reference external" href="https://github.com/k2oceanic/acoustic_msgs_tools">Acoustic Msgs Tools</a></strong> Is a collection of tools to view and interpret messages in the <a class="reference external" href="https://github.com/apl-ocean-engineering/hydrographic_msgs">hydrographic_msgs</a> package.
+<img alt="wc_gui2-2022-02-22_15 21 30" src="https://user-images.githubusercontent.com/23006525/155218007-6cd1ff3e-8736-47ba-ba1b-50a0fee31345.gif" /></p>
+<p><strong><a class="reference external" href="https://github.com/rolker/rviz_sonar_image">Watercolumn Rviz Plugin</a></strong> is a plugin that allows you to visualize the norbit watercolumn in RViz
+<img alt="image" src="https://user-images.githubusercontent.com/23006525/195664892-8db3c42e-3afb-4a89-9e61-84f3f9fd1ff8.png" /></p>
+</div>
+<div class="section" id="parameters">
+<h2>Parameters<a class="headerlink" href="#parameters" title="Permalink to this heading"></a></h2>
+<p>below you can find a sample norbit configuration with comments describing each parameter.</p>
+<p>for more detials on the startup settings parameter refer section 7 in the <a class="reference external" href="https://raw.githubusercontent.com/uri-ocean-robotics/norbit/master/norbit/doc/TN-180196-1D-WBMS_DFD_External.pdf?token=GHSAT0AAAAAABZI2NATU3KXJNE6RCIBDIQYY2IKYOQ">Norbit DFD</a></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ip</span><span class="p">:</span>                 <span class="s2">&quot;10.1.10.61&quot;</span>            <span class="c1"># the IP addres of your norbit</span>
+<span class="n">cmd_port</span><span class="p">:</span>           <span class="mi">2209</span>                    <span class="c1"># the port the norbit listens for commands. normally/default 2209</span>
+<span class="n">bathy_port</span><span class="p">:</span>         <span class="mi">2210</span>                    <span class="c1"># the port which bathymetry is published. normally/default 2210</span>
+<span class="n">sensor_frame</span><span class="p">:</span>       <span class="s2">&quot;norbit&quot;</span>                <span class="c1"># the TF frame of the norbit</span>
+<span class="n">pointcloud_topic</span><span class="p">:</span>   <span class="s2">&quot;cloud&quot;</span>                 <span class="c1"># the topic you want to send your pointclouds on</span>
+<span class="n">bathymetric_topic</span><span class="p">:</span>  <span class="s2">&quot;bathymetric&quot;</span>           <span class="c1"># norbit_msgs raw bathymetric topic</span>
+<span class="n">detections_topic</span><span class="p">:</span>   <span class="s2">&quot;detections&quot;</span>            <span class="c1"># hydrographic_msgs detection topic</span>
+
+<span class="c1"># watercolumn stuff If both are left blank WC data will not be requested from the unit</span>
+<span class="n">norbit_watercolumn_topic</span><span class="p">:</span> <span class="s2">&quot;watercolumn_raw&quot;</span> <span class="c1"># the norbit_msgs watercolum message topic.  not published if blank.</span>
+<span class="n">watercolumn_topic</span><span class="p">:</span>  <span class="s2">&quot;watercolumn&quot;</span>           <span class="c1"># the hydrographic_msgs watercolum topic.  not published if blank.</span>
+<span class="n">cmd_timeout</span><span class="p">:</span>        <span class="mf">0.5</span>                     <span class="c1"># how long should you wait for a command response before you consider it timed out</span>
+<span class="n">startup_settings</span><span class="p">:</span>                           <span class="c1"># the norbit settings to be applied at startup (see doc/*DFD_external.pdf)</span>
+    <span class="n">set_power</span><span class="p">:</span>        <span class="s2">&quot;1&quot;</span>
+    <span class="n">set_gate_mode</span><span class="p">:</span>    <span class="s2">&quot;1&quot;</span>
+    <span class="n">set_range</span><span class="p">:</span>        <span class="s2">&quot;.5 30&quot;</span>
+    <span class="n">set_time_source</span><span class="p">:</span>  <span class="s2">&quot;1&quot;</span>                   <span class="c1"># 0: IRIG-B 1:NTP 2: IRIG-B (inverted) 3: NTP+PPS(pos) 4: </span>
+                                            <span class="c1"># NTP+PPS(neg) 5: ZDA+PPS(pos) 6:ZDA+PPS(neg) </span>
+                                            <span class="c1"># 7:ZDA 8:Free run (time since startup)</span>
+    <span class="n">set_ntp_server</span><span class="p">:</span>   <span class="s2">&quot;timepi.aura&quot;</span>
+
+<span class="n">shutdown_settings</span><span class="p">:</span>
+    <span class="n">set_power</span><span class="p">:</span>      <span class="s2">&quot;0&quot;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="issuing-norbit-commands-via-ros-services">
+<h2>Issuing Norbit commands via ROS services<a class="headerlink" href="#issuing-norbit-commands-via-ros-services" title="Permalink to this heading"></a></h2>
+<p>Comands can be via a rosservice call.  This grants control of the unit without the Norbit GUI.  These services can also be called from other ROS nodes such as mission planners.</p>
+<p>You can also call these commands from the terminal using the ROS service command line utility.  See the example below that tells the unit to start pinging:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">rosservice</span> <span class="n">call</span> <span class="o">&lt;</span><span class="n">norbit</span> <span class="n">node</span> <span class="n">name</span> <span class="n">including</span> <span class="n">namespace</span><span class="o">&gt;</span> <span class="s2">&quot;cmd: &#39;set_power&#39;</span>
+<span class="n">val</span><span class="p">:</span> <span class="s1">&#39;1&#39;</span><span class="s2">&quot; </span>
+
+</pre></div>
+</div>
+<p>For a list of available commands reffer to section 7 of the <a class="reference external" href="https://raw.githubusercontent.com/uri-ocean-robotics/norbit/master/norbit/doc/TN-180196-1D-WBMS_DFD_External.pdf?token=GHSAT0AAAAAABZI2NATU3KXJNE6RCIBDIQYY2IKYOQ">Norbit DFD</a></p>
+</div>
+<div class="section" id="contributing">
+<h2>Contributing<a class="headerlink" href="#contributing" title="Permalink to this heading"></a></h2>
+<p>Thank you for considering a contribution to this package.   Please review our <span class="xref myst">CONTRIBUTING</span> guidelines to get started.</p>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, URI Ocean Robotics and URI Roman Lab.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
