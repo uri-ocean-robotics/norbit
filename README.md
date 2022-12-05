@@ -2,7 +2,7 @@
 
 This driver is designed interface directly with a Norbit sonar compatible with the [Norbit DFD](https://raw.githubusercontent.com/uri-ocean-robotics/norbit/master/norbit/doc/TN-180196-1D-WBMS_DFD_External.pdf?token=GHSAT0AAAAAABZI2NASRGSDYGYNFR7TZINCY2IJH6Q)
 
-![image](media/norbit_demo.gif)
+![image](docs/media/norbit_demo.gif)
 
 ## Installation ##
 
