@@ -38,7 +38,7 @@ An example launch file can be found in the norbit/launch directory.   An example
 
 To run the norbit with the parameters speified in the aforementioned yaml config file simply run
 ```
-roslaunch norbit norbit.launch ip:<your unit's ip address>
+roslaunch norbit norbit.launch ip:=<your unit's ip address>
 ```
 
 ## Additional Utilities ##
