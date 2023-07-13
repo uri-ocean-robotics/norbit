@@ -46,6 +46,7 @@ void NorbitConnection::updateParams() {
                                   params_.watercolumn_topic, "water_column/mb_wc");
 
   privateNode_.getParam("cmd_timeout", params_.cmd_timeout);
+  privateNode_.getParam("disconnect_timeout", params_.disconnect_timeout);
   privateNode_.getParam("startup_settings", params_.startup_settings);
   privateNode_.getParam("shutdown_settings", params_.shutdown_settings);
 }
@@ -89,16 +90,28 @@ void NorbitConnection::setupPubSub() {
   srv_map_["set_power"] = privateNode_.advertiseService(
       "set_power", &NorbitConnection::setPowerCallback, this);
 
-  // timers
-  disconnect_timer_ = privateNode_.createTimer(ros::Duration(1.0),
-                           &NorbitConnection::disconnectTimerCallback,
-                           this);
+  // Timer needs to be disabled until we have established a connection.
+  // Otherwise the first thing the node does when the sonar is powered
+  // on is to reset the connection.
+  bool oneshot = false;
+  bool autostart = false;
+  disconnect_timer_ = privateNode_.createTimer(
+      ros::Duration(params_.disconnect_timeout),
+      &NorbitConnection::disconnectTimerCallback, this, oneshot, autostart);
 }
 
 void NorbitConnection::waitForConnections(){
-  while(!shutdown_ && !openConnections());
+  while(!shutdown_ && !openConnections()) {;}
 
-  ROS_INFO_COND(!shutdown_ , "Connection Estabilished");
+  if (!shutdown_) {
+    ROS_INFO("Connection Established");
+    // It takes the Norbit a few seconds to start responding after
+    // establishing connections. Sleep here to avoid the disconnect_timer
+    // firing unnecessarily.
+    ros::Duration timeout(3.0);
+    timeout.sleep();
+    disconnect_timer_.start();
+  }
 }
 
 
@@ -150,11 +163,10 @@ void removeSubstrs(std::string &s, const std::string p) {
     s.erase(i, n);
 }
 
-void NorbitConnection::initializeSonarParams(){
+void NorbitConnection::initializeSonarParams() {
   for (auto param : params_.startup_settings) {
-    while(!sendCmd(param.first, param.second).ack){
-      ros::Duration timeout(params_.cmd_timeout);
-      timeout.sleep();
+    while(!sendCmd(param.first, param.second).ack) {
+      ROS_INFO_STREAM("Did not get ack for " << param.first << ". Resending");
     }
   }
 }
@@ -167,7 +179,7 @@ norbit_msgs::CmdResp NorbitConnection::sendCmd(const std::string &cmd,
   std::string message = cmd + " " + val;
   std::string key = cmd;
 
-  // some of the norbit reponses don't echo back set_<cmd> so we need to strip
+  // some of the norbit responses don't echo back set_<cmd> so we need to strip
   // it
   removeSubstrs(key, "set_");
   removeSubstrs(key, " ");
@@ -178,7 +190,12 @@ norbit_msgs::CmdResp NorbitConnection::sendCmd(const std::string &cmd,
   auto start_time = ros::WallTime::now();
   bool running = true;
   out.success = false;
+  // Whether the ack matched what was expected from the command.
+  // It seems like most of the callers use the ack field for testing success,
+  // rather than the success field.
   out.ack = false;
+  // holds most recent response; may not match the command. Used to monitor
+  // whether any connection has been made.
   out.resp = "";
   do {
     spin_once();
@@ -191,21 +208,15 @@ norbit_msgs::CmdResp NorbitConnection::sendCmd(const std::string &cmd,
         out.ack = true;
         running = false;
       } else {
+        ROS_INFO_STREAM("Discarding. Did not match key: " << key << ", response: " << out.resp);
         cmd_resp_queue_.pop_front();
       }
     } else {
-      if (ros::WallTime::now().toSec() - start_time.toSec() >
-          params_.cmd_timeout) {
-
-        if (out.resp != "") {
-          ROS_ERROR("[%s] received bad ACK: %s",
-                    ros::this_node::getName().c_str(), out.resp.c_str());
-          out.ack = true;
-        } else {
-          ROS_ERROR("[%s] TIMEOUT -- no ACK received",
-                    ros::this_node::getName().c_str());
-          out.ack = false;
-        }
+      auto dt = ros::WallTime::now().toSec() - start_time.toSec();
+      if (dt > params_.cmd_timeout) {
+        ROS_ERROR("[%s] TIMEOUT -- no ACK received",
+                  ros::this_node::getName().c_str());
+        out.ack = false;
         running = false;
       }
     }
@@ -216,12 +227,15 @@ norbit_msgs::CmdResp NorbitConnection::sendCmd(const std::string &cmd,
 
 void NorbitConnection::listenForCmd() {
 
-  boost::asio::async_read_until(*sockets_.cmd, cmd_resp_buffer_, "\r\n",
+  // Most commands are echoed with 0x0d 0x0a (\r\n), but
+  // set_ntp_server is termianted with 0x0a only.
+  boost::asio::async_read_until(*sockets_.cmd, cmd_resp_buffer_, "\n",
                                 boost::bind(&NorbitConnection::receiveCmd, this,
                                             boost::asio::placeholders::error));
 }
 
 void NorbitConnection::receiveCmd(const boost::system::error_code &err) {
+  disconnect_timer_.setPeriod(ros::Duration(params_.disconnect_timeout), true);
   std::string line;
   std::istream is(&cmd_resp_buffer_);
   std::getline(is, line);
@@ -242,7 +256,7 @@ void NorbitConnection::receiveWC() {
 
 void NorbitConnection::wcHandler(const boost::system::error_code &error,
                                   std::size_t bytes_transferred) {
-
+  disconnect_timer_.setPeriod(ros::Duration(params_.disconnect_timeout), true);
   processHdrMsg(*sockets_.water_column,hdr_buff_.water_column);
   receiveWC();
   return;
@@ -259,14 +273,14 @@ void NorbitConnection::receiveBathy() {
 
 void NorbitConnection::bathyHandler(const boost::system::error_code &error,
                                   std::size_t bytes_transferred) {
-
+  disconnect_timer_.setPeriod(ros::Duration(params_.disconnect_timeout), true);
+  ROS_INFO("Got bathy!");
   processHdrMsg(*sockets_.bathymetric,hdr_buff_.bathymetric);
   receiveBathy();
   return;
 }
 
 void NorbitConnection::processHdrMsg(boost::asio::ip::tcp::socket & sock, boost::array<char, sizeof(norbit_msgs::CommonHeader)> &hdr){
-  disconnect_timer_.setPeriod(ros::Duration(1.0),true);
   try {
     norbit_types::Message msg;
     if (msg.fromBoostArray(hdr)) {
@@ -283,7 +297,7 @@ void NorbitConnection::processHdrMsg(boost::asio::ip::tcp::socket & sock, boost:
            wcCallback(msg.getWC());
         }
       }
-      else ROS_WARN("Watercolumn Message failed CRC check:  Ignoring");
+      else ROS_WARN("Norbit Message failed CRC check:  Ignoring");
 
     }else{
       if(msg.commonHeader().version!=NORBIT_CURRENT_VERSION)
@@ -359,9 +373,18 @@ void NorbitConnection::wcCallback(norbit_types::WaterColumnData data){
 }
 
 void NorbitConnection::disconnectTimerCallback(const ros::TimerEvent& event){
-  ROS_INFO("No Messages received for a while.   Checking Connections");
-  if(!sendCmd("set_power", "").ack){
+  ROS_INFO("No Messages received for a while. Checking Connections");
+  // When the sonar powers itself off in air, there won't be any data but
+  // the connection may still be fine. So, issue a query to check.
+  // NOTE: It is important to NOT check that ack was successful here -- we
+  //   just need aliveness. The timer is called in a separate thread from the initial
+  //   parameter initialization, and if those are slow enough to time this out,
+  //   (and timeouts were chosen poorly) it has gotten stuck in an infinite loop
+  //   with the main thread discarding responses to the set_power command,
+  //   and the timer thread resetting the connection ...
+  if(sendCmd("set_power", "").resp == "") {
     ROS_ERROR("Sonar disconnected: restarting connections");
+    disconnect_timer_.stop();  // will be restarted by waitForConnections
     closeConnections();
     waitForConnections();
     initializeSonarParams();
@@ -389,20 +412,12 @@ void NorbitConnection::spin_once() {
 }
 
 void NorbitConnection::spin() {
-
-  do {
-
-    if(shutdown_){
-      ROS_WARN("[%s] shutting down:  executing shutdown parameters",ros::this_node::getName().c_str());
-      for (auto param : params_.shutdown_settings) {
-        sendCmd(param.first, param.second);
-        ros::shutdown();
-      }
-    }else{
-      spin_once();
-    }
-  }while (!shutdown_);
-
-
-
+  while (!shutdown_) {
+    spin_once();
+  }
+  ROS_WARN("[%s] shutting down:  executing shutdown parameters",ros::this_node::getName().c_str());
+  for (auto param : params_.shutdown_settings) {
+    sendCmd(param.first, param.second);
+  }
+  ros::shutdown();
 }
