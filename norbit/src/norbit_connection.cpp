@@ -90,16 +90,28 @@ void NorbitConnection::setupPubSub() {
   srv_map_["set_power"] = privateNode_.advertiseService(
       "set_power", &NorbitConnection::setPowerCallback, this);
 
-  // timers
+  // Timer needs to be disabled until we have established a connection.
+  // Otherwise the first thing the node does when the sonar is powered
+  // on is to reset the connection.
+  bool oneshot = false;
+  bool autostart = false;
   disconnect_timer_ = privateNode_.createTimer(
       ros::Duration(params_.disconnect_timeout),
-      &NorbitConnection::disconnectTimerCallback, this);
+      &NorbitConnection::disconnectTimerCallback, this, oneshot, autostart);
 }
 
 void NorbitConnection::waitForConnections(){
-  while(!shutdown_ && !openConnections());
+  while(!shutdown_ && !openConnections()) {;}
 
-  ROS_INFO_COND(!shutdown_ , "Connection Estabilished");
+  if (!shutdown_) {
+    ROS_INFO("Connection Established");
+    // It takes the Norbit a few seconds to start responding after
+    // establishing connections. Sleep here to avoid the disconnect_timer
+    // firing unnecessarily.
+    ros::Duration timeout(3.0);
+    timeout.sleep();
+    disconnect_timer_.start();
+  }
 }
 
 
@@ -196,7 +208,7 @@ norbit_msgs::CmdResp NorbitConnection::sendCmd(const std::string &cmd,
         out.ack = true;
         running = false;
       } else {
-        ROS_INFO_STREAM("..did not match key: " << key << ". Discarding response.");
+        ROS_INFO_STREAM("Discarding. Did not match key: " << key << ", response: " << out.resp);
         cmd_resp_queue_.pop_front();
       }
     } else {
@@ -285,7 +297,7 @@ void NorbitConnection::processHdrMsg(boost::asio::ip::tcp::socket & sock, boost:
            wcCallback(msg.getWC());
         }
       }
-      else ROS_WARN("Watercolumn Message failed CRC check:  Ignoring");
+      else ROS_WARN("Norbit Message failed CRC check:  Ignoring");
 
     }else{
       if(msg.commonHeader().version!=NORBIT_CURRENT_VERSION)
@@ -372,6 +384,7 @@ void NorbitConnection::disconnectTimerCallback(const ros::TimerEvent& event){
   //   and the timer thread resetting the connection ...
   if(sendCmd("set_power", "").resp == "") {
     ROS_ERROR("Sonar disconnected: restarting connections");
+    disconnect_timer_.stop();  // will be restarted by waitForConnections
     closeConnections();
     waitForConnections();
     initializeSonarParams();
