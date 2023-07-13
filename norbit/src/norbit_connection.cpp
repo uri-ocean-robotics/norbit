@@ -216,7 +216,9 @@ norbit_msgs::CmdResp NorbitConnection::sendCmd(const std::string &cmd,
 
 void NorbitConnection::listenForCmd() {
 
-  boost::asio::async_read_until(*sockets_.cmd, cmd_resp_buffer_, "\r\n",
+  // Most commands are echoed with 0x0d 0x0a (\r\n), but
+  // set_ntp_server is termianted with 0x0a only.
+  boost::asio::async_read_until(*sockets_.cmd, cmd_resp_buffer_, "\n",
                                 boost::bind(&NorbitConnection::receiveCmd, this,
                                             boost::asio::placeholders::error));
 }
