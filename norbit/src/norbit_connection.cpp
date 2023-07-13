@@ -46,6 +46,7 @@ void NorbitConnection::updateParams() {
                                   params_.watercolumn_topic, "water_column/mb_wc");
 
   privateNode_.getParam("cmd_timeout", params_.cmd_timeout);
+  privateNode_.getParam("disconnect_timeout", params_.disconnect_timeout);
   privateNode_.getParam("startup_settings", params_.startup_settings);
   privateNode_.getParam("shutdown_settings", params_.shutdown_settings);
 }
@@ -90,9 +91,9 @@ void NorbitConnection::setupPubSub() {
       "set_power", &NorbitConnection::setPowerCallback, this);
 
   // timers
-  disconnect_timer_ = privateNode_.createTimer(ros::Duration(1.0),
-                           &NorbitConnection::disconnectTimerCallback,
-                           this);
+  disconnect_timer_ = privateNode_.createTimer(
+      ros::Duration(params_.disconnect_timeout),
+      &NorbitConnection::disconnectTimerCallback, this);
 }
 
 void NorbitConnection::waitForConnections(){
@@ -150,11 +151,10 @@ void removeSubstrs(std::string &s, const std::string p) {
     s.erase(i, n);
 }
 
-void NorbitConnection::initializeSonarParams(){
+void NorbitConnection::initializeSonarParams() {
   for (auto param : params_.startup_settings) {
-    while(!sendCmd(param.first, param.second).ack){
-      ros::Duration timeout(params_.cmd_timeout);
-      timeout.sleep();
+    while(!sendCmd(param.first, param.second).ack) {
+      ROS_INFO_STREAM("Did not get ack for " << param.first << ". Resending");
     }
   }
 }
@@ -167,7 +167,7 @@ norbit_msgs::CmdResp NorbitConnection::sendCmd(const std::string &cmd,
   std::string message = cmd + " " + val;
   std::string key = cmd;
 
-  // some of the norbit reponses don't echo back set_<cmd> so we need to strip
+  // some of the norbit responses don't echo back set_<cmd> so we need to strip
   // it
   removeSubstrs(key, "set_");
   removeSubstrs(key, " ");
@@ -224,6 +224,7 @@ void NorbitConnection::listenForCmd() {
 }
 
 void NorbitConnection::receiveCmd(const boost::system::error_code &err) {
+  disconnect_timer_.setPeriod(ros::Duration(params_.disconnect_timeout), true);
   std::string line;
   std::istream is(&cmd_resp_buffer_);
   std::getline(is, line);
@@ -244,7 +245,7 @@ void NorbitConnection::receiveWC() {
 
 void NorbitConnection::wcHandler(const boost::system::error_code &error,
                                   std::size_t bytes_transferred) {
-
+  disconnect_timer_.setPeriod(ros::Duration(params_.disconnect_timeout), true);
   processHdrMsg(*sockets_.water_column,hdr_buff_.water_column);
   receiveWC();
   return;
@@ -261,14 +262,14 @@ void NorbitConnection::receiveBathy() {
 
 void NorbitConnection::bathyHandler(const boost::system::error_code &error,
                                   std::size_t bytes_transferred) {
-
+  disconnect_timer_.setPeriod(ros::Duration(params_.disconnect_timeout), true);
+  ROS_INFO("Got bathy!");
   processHdrMsg(*sockets_.bathymetric,hdr_buff_.bathymetric);
   receiveBathy();
   return;
 }
 
 void NorbitConnection::processHdrMsg(boost::asio::ip::tcp::socket & sock, boost::array<char, sizeof(norbit_msgs::CommonHeader)> &hdr){
-  disconnect_timer_.setPeriod(ros::Duration(1.0),true);
   try {
     norbit_types::Message msg;
     if (msg.fromBoostArray(hdr)) {
@@ -361,8 +362,8 @@ void NorbitConnection::wcCallback(norbit_types::WaterColumnData data){
 }
 
 void NorbitConnection::disconnectTimerCallback(const ros::TimerEvent& event){
-  ROS_INFO("No Messages received for a while.   Checking Connections");
-  if(!sendCmd("set_power", "").ack){
+  ROS_INFO("No Messages received for a while. Checking Connections");
+  if(!sendCmd("set_power", "").ack) {
     ROS_ERROR("Sonar disconnected: restarting connections");
     closeConnections();
     waitForConnections();

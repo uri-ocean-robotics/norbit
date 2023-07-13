@@ -39,6 +39,7 @@ struct ConnectionParams {
   std::string norbit_watercolumn_topic;
   std::string watercolumn_topic;
   double cmd_timeout;
+  double disconnect_timeout;
   std::map<std::string, std::string> startup_settings;
   std::map<std::string, std::string> shutdown_settings;
 
