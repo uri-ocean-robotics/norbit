@@ -178,7 +178,12 @@ norbit_msgs::CmdResp NorbitConnection::sendCmd(const std::string &cmd,
   auto start_time = ros::WallTime::now();
   bool running = true;
   out.success = false;
+  // Whether the ack matched what was expected from the command.
+  // It seems like most of the callers use the ack field for testing success,
+  // rather than the success field.
   out.ack = false;
+  // holds most recent response; may not match the command. Used to monitor
+  // whether any connection has been made.
   out.resp = "";
   do {
     spin_once();
@@ -191,21 +196,15 @@ norbit_msgs::CmdResp NorbitConnection::sendCmd(const std::string &cmd,
         out.ack = true;
         running = false;
       } else {
+        ROS_INFO_STREAM("..did not match key: " << key << ". Discarding response.");
         cmd_resp_queue_.pop_front();
       }
     } else {
-      if (ros::WallTime::now().toSec() - start_time.toSec() >
-          params_.cmd_timeout) {
-
-        if (out.resp != "") {
-          ROS_ERROR("[%s] received bad ACK: %s",
-                    ros::this_node::getName().c_str(), out.resp.c_str());
-          out.ack = true;
-        } else {
-          ROS_ERROR("[%s] TIMEOUT -- no ACK received",
-                    ros::this_node::getName().c_str());
-          out.ack = false;
-        }
+      auto dt = ros::WallTime::now().toSec() - start_time.toSec();
+      if (dt > params_.cmd_timeout) {
+        ROS_ERROR("[%s] TIMEOUT -- no ACK received",
+                  ros::this_node::getName().c_str());
+        out.ack = false;
         running = false;
       }
     }
@@ -363,7 +362,15 @@ void NorbitConnection::wcCallback(norbit_types::WaterColumnData data){
 
 void NorbitConnection::disconnectTimerCallback(const ros::TimerEvent& event){
   ROS_INFO("No Messages received for a while. Checking Connections");
-  if(!sendCmd("set_power", "").ack) {
+  // When the sonar powers itself off in air, there won't be any data but
+  // the connection may still be fine. So, issue a query to check.
+  // NOTE: It is important to NOT check that ack was successful here -- we
+  //   just need aliveness. The timer is called in a separate thread from the initial
+  //   parameter initialization, and if those are slow enough to time this out,
+  //   (and timeouts were chosen poorly) it has gotten stuck in an infinite loop
+  //   with the main thread discarding responses to the set_power command,
+  //   and the timer thread resetting the connection ...
+  if(sendCmd("set_power", "").resp == "") {
     ROS_ERROR("Sonar disconnected: restarting connections");
     closeConnections();
     waitForConnections();
