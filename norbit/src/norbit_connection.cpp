@@ -391,20 +391,12 @@ void NorbitConnection::spin_once() {
 }
 
 void NorbitConnection::spin() {
-
-  do {
-
-    if(shutdown_){
-      ROS_WARN("[%s] shutting down:  executing shutdown parameters",ros::this_node::getName().c_str());
-      for (auto param : params_.shutdown_settings) {
-        sendCmd(param.first, param.second);
-        ros::shutdown();
-      }
-    }else{
-      spin_once();
-    }
-  }while (!shutdown_);
-
-
-
+  while (!shutdown_) {
+    spin_once();
+  }
+  ROS_WARN("[%s] shutting down:  executing shutdown parameters",ros::this_node::getName().c_str());
+  for (auto param : params_.shutdown_settings) {
+    sendCmd(param.first, param.second);
+  }
+  ros::shutdown();
 }
