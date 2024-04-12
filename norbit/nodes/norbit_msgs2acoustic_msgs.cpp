@@ -15,9 +15,9 @@ int main(int argc, char *argv[]) {
   rosbag::Bag out_bag;
   out_bag.open(argv[2], rosbag::bagmode::Write);
 
-  acoustic_msgs::SonarDetections::Ptr detections_msg(new acoustic_msgs::SonarDetections);
-  acoustic_msgs::SonarRanges::Ptr ranges_msg(new acoustic_msgs::SonarRanges);
-  acoustic_msgs::RawSonarImage::Ptr wc_pointer(new acoustic_msgs::RawSonarImage);
+  marine_acoustic_msgs::SonarDetections::Ptr detections_msg(new marine_acoustic_msgs::SonarDetections);
+  marine_acoustic_msgs::SonarRanges::Ptr ranges_msg(new marine_acoustic_msgs::SonarRanges);
+  marine_acoustic_msgs::RawSonarImage::Ptr wc_pointer(new marine_acoustic_msgs::RawSonarImage);
 
   for (rosbag::MessageInstance const m: rosbag::View(in_bag)) {
     norbit_msgs::BathymetricStamped::ConstPtr i = m.instantiate<norbit_msgs::BathymetricStamped>();

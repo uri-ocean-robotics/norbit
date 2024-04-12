@@ -5,7 +5,7 @@ NS_HEAD
 namespace conversions {
 
   void bathymetric2SonarRanges(const norbit_msgs::BathymetricStamped & in,
-                               acoustic_msgs::SonarRanges & out) {
+                               marine_acoustic_msgs::SonarRanges & out) {
     auto num_beams = in.bathy.bathymetric_header.N;
 
     out.header = in.header;
@@ -26,9 +26,9 @@ namespace conversions {
 
     for (size_t i = 0; i < num_beams; i++) {
       if (in.bathy.detections[i].quality_flag == 3) {
-        out.flags[i].flag = acoustic_msgs::DetectionFlag::DETECT_OK;
+        out.flags[i].flag = marine_acoustic_msgs::DetectionFlag::DETECT_OK;
       } else {
-        out.flags[i].flag = acoustic_msgs::DetectionFlag::DETECT_BAD_SONAR;
+        out.flags[i].flag = marine_acoustic_msgs::DetectionFlag::DETECT_BAD_SONAR;
       }
       out.transmit_delays[i] = 0;
       out.intensities[i] = in.bathy.detections[i].intensity;
@@ -46,7 +46,7 @@ namespace conversions {
   }
 
   void bathymetric2SonarDetections(const norbit_msgs::BathymetricStamped & in,
-                                   acoustic_msgs::SonarDetections & out) {
+                                   marine_acoustic_msgs::SonarDetections & out) {
     auto num_beams = in.bathy.bathymetric_header.N;
 
     out.header = in.header;
@@ -64,9 +64,9 @@ namespace conversions {
     out.rx_angles.resize(num_beams);
     for (size_t i = 0; i < num_beams; i++) {
       if (in.bathy.detections[i].quality_flag == 3) {
-        out.flags[i].flag = acoustic_msgs::DetectionFlag::DETECT_OK;
+        out.flags[i].flag = marine_acoustic_msgs::DetectionFlag::DETECT_OK;
       } else {
-        out.flags[i].flag = acoustic_msgs::DetectionFlag::DETECT_BAD_SONAR;
+        out.flags[i].flag = marine_acoustic_msgs::DetectionFlag::DETECT_BAD_SONAR;
       }
 
       out.two_way_travel_times[i] = in.bathy.detections[i].sample_number / in.bathy.bathymetric_header.sample_rate;
@@ -81,7 +81,7 @@ namespace conversions {
   }
 
   void norbitWC2RawSonarImage(const norbit_msgs::WaterColumnStamped & in,
-                              acoustic_msgs::RawSonarImage & out) {
+                              marine_acoustic_msgs::RawSonarImage & out) {
     auto num_beams = in.water_column.water_column_header.N;  // Number of beams
     auto num_samples = in.water_column.water_column_header.M;  // Number of samples in each beam
 
@@ -114,34 +114,34 @@ namespace conversions {
     out.image.is_bigendian = false;
     switch (in.water_column.water_column_header.dtype) {
       case norbit_msgs::WaterColumnHeader::DTYPE_UINT8:
-        out.image.dtype = acoustic_msgs::SonarImageData::DTYPE_UINT8;
+        out.image.dtype = marine_acoustic_msgs::SonarImageData::DTYPE_UINT8;
         break;
       case norbit_msgs::WaterColumnHeader::DTYPE_INT8:
-        out.image.dtype = acoustic_msgs::SonarImageData::DTYPE_INT8;
+        out.image.dtype = marine_acoustic_msgs::SonarImageData::DTYPE_INT8;
         break;
       case norbit_msgs::WaterColumnHeader::DTYPE_UINT16:
-        out.image.dtype = acoustic_msgs::SonarImageData::DTYPE_UINT16;
+        out.image.dtype = marine_acoustic_msgs::SonarImageData::DTYPE_UINT16;
         break;
       case norbit_msgs::WaterColumnHeader::DTYPE_INT16:
-        out.image.dtype = acoustic_msgs::SonarImageData::DTYPE_INT16;
+        out.image.dtype = marine_acoustic_msgs::SonarImageData::DTYPE_INT16;
         break;
       case norbit_msgs::WaterColumnHeader::DTYPE_UINT32:
-        out.image.dtype = acoustic_msgs::SonarImageData::DTYPE_UINT32;
+        out.image.dtype = marine_acoustic_msgs::SonarImageData::DTYPE_UINT32;
         break;
       case norbit_msgs::WaterColumnHeader::DTYPE_INT32:
-        out.image.dtype = acoustic_msgs::SonarImageData::DTYPE_INT32;
+        out.image.dtype = marine_acoustic_msgs::SonarImageData::DTYPE_INT32;
         break;
       case norbit_msgs::WaterColumnHeader::DTYPE_UINT64:
-        out.image.dtype = acoustic_msgs::SonarImageData::DTYPE_UINT64;
+        out.image.dtype = marine_acoustic_msgs::SonarImageData::DTYPE_UINT64;
         break;
       case norbit_msgs::WaterColumnHeader::DTYPE_INT64:
-        out.image.dtype = acoustic_msgs::SonarImageData::DTYPE_INT64;
+        out.image.dtype = marine_acoustic_msgs::SonarImageData::DTYPE_INT64;
         break;
       case norbit_msgs::WaterColumnHeader::DTYPE_FLOAT32:
-        out.image.dtype = acoustic_msgs::SonarImageData::DTYPE_FLOAT32;
+        out.image.dtype = marine_acoustic_msgs::SonarImageData::DTYPE_FLOAT32;
         break;
       case norbit_msgs::WaterColumnHeader::DTYPE_FLOAT64:
-        out.image.dtype = acoustic_msgs::SonarImageData::DTYPE_FLOAT64;
+        out.image.dtype = marine_acoustic_msgs::SonarImageData::DTYPE_FLOAT64;
         break;
     }
     //out.image.dtype = in.water_column.water_column_header.dtype;

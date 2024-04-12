@@ -59,12 +59,12 @@ void NorbitConnection::setupPubSub() {
   }
 
   if (params_.pubDetections()){
-    detect_pub_ = node_.advertise<acoustic_msgs::SonarDetections>(
+    detect_pub_ = node_.advertise<marine_acoustic_msgs::SonarDetections>(
           params_.detections_topic,1);
   }
 
   if (params_.pubRanges()) {
-    ranges_pub_ = node_.advertise<acoustic_msgs::SonarRanges>(params_.ranges_topic, 1);
+    ranges_pub_ = node_.advertise<marine_acoustic_msgs::SonarRanges>(params_.ranges_topic, 1);
   }
 
   if (params_.pubBathymetric()){
@@ -78,7 +78,7 @@ void NorbitConnection::setupPubSub() {
   }
 
   if(params_.pubMultibeamWC()){
-    wc_pub_ =  node_.advertise<acoustic_msgs::RawSonarImage>(
+    wc_pub_ =  node_.advertise<marine_acoustic_msgs::RawSonarImage>(
           params_.watercolumn_topic, 1);
   }
 
@@ -332,13 +332,13 @@ void NorbitConnection::bathyCallback(norbit_types::BathymetricData data) {
   }
 
   if (params_.pubDetections()) {
-    acoustic_msgs::SonarDetections detections_msg;
+    marine_acoustic_msgs::SonarDetections detections_msg;
     norbit::conversions::bathymetric2SonarDetections(bathy_msg, detections_msg);
     detect_pub_.publish(detections_msg);
   }
 
   if (params_.pubRanges()) {
-    acoustic_msgs::SonarRanges ranges_msg;
+    marine_acoustic_msgs::SonarRanges ranges_msg;
     norbit::conversions::bathymetric2SonarRanges(bathy_msg, ranges_msg);
     ranges_pub_.publish(ranges_msg);
   }
@@ -352,7 +352,7 @@ void NorbitConnection::wcCallback(norbit_types::WaterColumnData data){
     norbit_wc_pub_.publish(norb_wc_msg);
 
   if(params_.pubMultibeamWC()){
-    acoustic_msgs::RawSonarImage::Ptr hydro_wc_msg(new acoustic_msgs::RawSonarImage);
+    marine_acoustic_msgs::RawSonarImage::Ptr hydro_wc_msg(new marine_acoustic_msgs::RawSonarImage);
     norbit::conversions::norbitWC2RawSonarImage(norb_wc_msg, *hydro_wc_msg);
     wc_pub_.publish(hydro_wc_msg);
   }
