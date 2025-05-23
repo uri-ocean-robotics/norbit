@@ -1,9 +1,8 @@
 float32 snd_velocity     # Sound velocity in m/s
 float32 sample_rate      # Sampling rate in Hz
-uint32  N                # Number of beams
-uint32  M                # Number of samples in each beam
+uint32  beam_number      # Number of beams
+uint32  sample_number    # Number of samples in each beam
 float64 time             # Ping timestamp, unix time at
-
 
 uint32  DTYPE_UINT8 = 0
 uint32  DTYPE_INT8 = 1

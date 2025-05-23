@@ -1,6 +1,6 @@
 float32 snd_velocity     # Sound velocity in m/s
 float32 sample_rate      # Sampling rate in Hz
-uint32  N                # Number of beams
+uint32  beam_number      # Number of beams
 uint32  ping_number      # Sequence number of ping
 float64 time             # Ping timestamp, unix time at TX
 float64 time_net         # Timestamp Unix time as fract (send on network time)

@@ -1,35 +1,55 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.8)
+
 project(norbit_msgs)
 
-find_package(catkin REQUIRED COMPONENTS message_generation std_msgs)
+####################################################################
+## setup compiler                    
+####################################################################
 
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
 
-FILE(GLOB rosMsgFiles RELATIVE "${${PROJECT_NAME}_SOURCE_DIR}/msg"
-    "${${PROJECT_NAME}_SOURCE_DIR}/msg/*.msg")
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
 
-FOREACH(rosMsg ${rosMsgFiles})
-    MESSAGE( STATUS "Processing message file: ${rosMsg}" )
-    add_message_files( FILES ${rosMsg})
-ENDFOREACH(rosMsg)
+####################################################################
+## setup packages                    
+####################################################################
 
-add_message_files(
-  DIRECTORY msg
-  FILES
-  ${rosMsg}
-  )
+find_package(ament_cmake REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
 
-FILE(GLOB rosSrvFiles RELATIVE "${${PROJECT_NAME}_SOURCE_DIR}/srv"
-    "${${PROJECT_NAME}_SOURCE_DIR}/srv/*.srv")
+find_package(builtin_interfaces REQUIRED)
+find_package(std_msgs REQUIRED)
 
-FOREACH(rosSrv ${rosSrvFiles})
-    MESSAGE( STATUS "Processing Srv file: ${rosSrv}" )
-ENDFOREACH(rosMsg)
+####################################################################
+## setup files                    
+####################################################################
 
-add_service_files(
-  FILES
-  ${rosSrvFiles}
+file(GLOB MSG_FILES ${CMAKE_CURRENT_SOURCE_DIR}/**/*.msg)
+file(GLOB SRV_FILES ${CMAKE_CURRENT_SOURCE_DIR}/**/*.srv)
+
+set(INTERFACE_FILES "")
+
+foreach(I IN ITEMS ${MSG_FILES})
+  get_filename_component(ITEM_NAME ${I} NAME)
+  list(APPEND INTERFACE_FILES msg/${ITEM_NAME})
+endforeach()
+
+foreach(I IN ITEMS ${SRV_FILES})
+  get_filename_component(ITEM_NAME ${I} NAME)
+  list(APPEND INTERFACE_FILES srv/${ITEM_NAME})
+endforeach()
+
+rosidl_generate_interfaces(${PROJECT_NAME}
+  ${INTERFACE_FILES}
+  DEPENDENCIES
+    builtin_interfaces
+    std_msgs
 )
 
-generate_messages(DEPENDENCIES std_msgs)
+ament_export_dependencies(rosidl_default_runtime)
 
-catkin_package(CATKIN_DEPENDS message_runtime std_msgs)
+ament_package()
