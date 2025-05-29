@@ -1,0 +1,11 @@
+1) create a ros2 pakcage with basic lib and node with param
+
+2) using a thread to start TCP/IP node with data stream
+
+3) parse raw data
+
+4) parse standard format data
+
+5) parse acoustic msg data and many more
+
+6) others: readme, workflows, docs, citation, contributing, license...
