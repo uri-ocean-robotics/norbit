@@ -1,11 +1,16 @@
 #include <norbit/ros_wrapper.hpp>
 
+using namespace std::chrono_literals;
+
 NorbitRos::NorbitRos()
     : Node("norbit_ros_node")
 {
 
     //! Load param
     updateParams();
+
+    //! Setup ROS
+    setupPubSub();
 
 }
 
@@ -109,7 +114,83 @@ void NorbitRos::updateParams()
     std::cout<<"\n";                    
 }
 
-void NorbitRos::setupSubpub()
+void NorbitRos::setupPubSub()
 {
-    pc_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("pointcloud", 20);
+
+    // ===================================================================== //
+    // ros publishers
+    // ===================================================================== //
+
+    //! TODO: change to check if any subscription exists
+
+    if (params_.pubPointcloud()){
+        //! TODO: use pcl::PointCloud<pcl::PointXYZI or PointCloud2
+        cloud_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
+            params_.pointcloud_topic, 1);
+    }
+
+    if (params_.pubDetections()){
+        detect_pub_ = this->create_publisher<marine_acoustic_msgs::msg::SonarDetections>(
+            params_.detections_topic, 1);            
+    }
+
+    if (params_.pubRanges()){
+        ranges_pub_ = this->create_publisher<marine_acoustic_msgs::msg::SonarRanges>(
+            params_.ranges_topic, 1);            
+    }
+
+    if (params_.pubBathymetric()){
+        bathy_pub_ = this->create_publisher<norbit_msgs::msg::BathymetricStamped>(
+            params_.bathymetric_topic, 1);            
+    }    
+
+    if (params_.pubNorbitWC()){
+        norbit_wc_pub_ = this->create_publisher<norbit_msgs::msg::WaterColumnStamped>(
+            params_.norbit_watercolumn_topic, 1);            
+    }  
+
+    if (params_.pubMultibeamWC()){
+        wc_pub_ = this->create_publisher<marine_acoustic_msgs::msg::RawSonarImage>(
+            params_.watercolumn_topic, 1);            
+    }  
+
+    // ===================================================================== //
+    // ros services
+    // ===================================================================== //
+
+    norbit_cmd_srv_ = this->create_service<norbit_msgs::srv::NorbitCmd>(
+        "~/norbit_cmd", std::bind(
+            &NorbitRos::norbitCmdCallback, this, 
+            std::placeholders::_1, std::placeholders::_2));
+
+    set_power_srv_ = this->create_service<norbit_msgs::srv::SetPower>(
+        "~/set_power", std::bind(
+            &NorbitRos::setPowerCallback, this, 
+            std::placeholders::_1, std::placeholders::_2));            
+
+    // ===================================================================== //
+    // ros timer
+    // ===================================================================== //
+    disconnect_timer_ = this->create_wall_timer(
+        1s, std::bind(&NorbitRos::disconnectTimerCallback, this));
+}
+
+
+bool NorbitRos::norbitCmdCallback(
+    const std::shared_ptr<norbit_msgs::srv::NorbitCmd::Request> req,
+    const std::shared_ptr<norbit_msgs::srv::NorbitCmd::Response> resp)
+{
+
+}          
+
+bool NorbitRos::setPowerCallback(
+    const std::shared_ptr<norbit_msgs::srv::SetPower::Request> req,
+    const std::shared_ptr<norbit_msgs::srv::SetPower::Response> resp)
+{
+
+}
+
+void NorbitRos::disconnectTimerCallback()
+{
+
 }

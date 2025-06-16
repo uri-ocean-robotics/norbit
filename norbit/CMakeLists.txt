@@ -27,8 +27,7 @@ find_package(tf2_sensor_msgs REQUIRED)
 find_package(pcl_ros REQUIRED)
 find_package(pcl_conversions REQUIRED)
 find_package(norbit_msgs REQUIRED)
-
-# find_package(acoustic_msgs REQUIRED)
+find_package(marine_acoustic_msgs REQUIRED)
 
 ####################################################################
 ## setup dependencies
@@ -46,6 +45,7 @@ set(dependencies
   pcl_ros
   pcl_conversions
   norbit_msgs
+  marine_acoustic_msgs
 )
 
 ####################################################################
