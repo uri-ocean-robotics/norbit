@@ -35,7 +35,7 @@ find_package(norbit_msgs REQUIRED)
 ####################################################################
 
 set(library_name norbit_lib)
-set(executable_name norbit_node)
+set(executable_name norbit_mbes_node)
 set(dependencies
   rclcpp
   std_msgs
