@@ -59,6 +59,11 @@ include_directories(
 # Library
 add_library(${library_name} SHARED
   src/ros_wrapper.cpp
+  src/tcp_socket_handler.cpp
+  src/bathymetric_data.cpp
+  src/conversions.cpp
+  src/message.cpp
+  src/water_column_data.cpp
 )
 ament_target_dependencies(${library_name}
   ${dependencies}
@@ -78,12 +83,22 @@ target_link_libraries(${executable_name}
   ${library_name}
 )
 
+# add_executable(test_node
+#   test/test_timer.cpp
+# )
+# ament_target_dependencies(test_node
+#   ${dependencies}
+# )
+# target_link_libraries(test_node
+#   ${library_name}
+# )
+
 ####################################################################
 ## setup install 
 ####################################################################
 
 # Install
-install(TARGETS ${library_name} ${executable_name}
+install(TARGETS ${library_name} ${executable_name} 
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME}

@@ -22,6 +22,7 @@
         set_gate_mode:    "1"
         set_range:        ".5 30"
         set_time_source:  "1"                    # 0: IRIG-B 1:NTP 2: IRIG-B (inverted) 3: NTP+PPS(pos) 4: NTP+PPS(neg) 5: ZDA+PPS(pos) 6:ZDA+PPS(neg) 7:ZDA 8:Free run (time since startup)
+        set_rate:         "5"                    # Default: 20Hz
         # set_ntp_server:   "timepi.aura"
 
     shutdown_settings:

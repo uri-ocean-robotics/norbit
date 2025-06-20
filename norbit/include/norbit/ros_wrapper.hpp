@@ -4,6 +4,9 @@
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
+#include <pcl/point_types.h>
+#include <pcl_conversions/pcl_conversions.h>
+
 #include <marine_acoustic_msgs/msg/sonar_detections.hpp>
 #include <marine_acoustic_msgs/msg/sonar_ranges.hpp>
 #include <marine_acoustic_msgs/msg/raw_sonar_image.hpp>
@@ -15,6 +18,8 @@
 
 #include <norbit/default.hpp>
 #include <norbit/parameters.hpp>
+#include <norbit/tcp_socket_handler.hpp>
+#include <norbit/ros_helper.hpp>
 
 class NorbitRos : public rclcpp::Node
 {
@@ -23,6 +28,8 @@ public:
      * @brief something here
      */  
     NorbitRos();
+
+    ~NorbitRos();
 
 private:
     // ===================================================================== //
@@ -33,6 +40,10 @@ private:
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr 
         cloud_pub_;
 
+    //! @brief Bathymetric publisher
+    rclcpp::Publisher<norbit_msgs::msg::BathymetricStamped>::SharedPtr 
+        bathy_pub_;
+
     //! @brief Detections publisher
     rclcpp::Publisher<marine_acoustic_msgs::msg::SonarDetections>::SharedPtr 
         detect_pub_;
@@ -40,10 +51,6 @@ private:
     //! @brief Range publisher
     rclcpp::Publisher<marine_acoustic_msgs::msg::SonarRanges>::SharedPtr 
         ranges_pub_;
-
-    //! @brief Bathymetric publisher
-    rclcpp::Publisher<norbit_msgs::msg::BathymetricStamped>::SharedPtr 
-        bathy_pub_;
 
     //! @brief Watercolumn publisher
     rclcpp::Publisher<norbit_msgs::msg::WaterColumnStamped>::SharedPtr 
@@ -71,6 +78,9 @@ private:
     //! @brief parameters for the sensor
     ConnectionParams params_;
 
+    //! UDP handler object pointer
+    std::shared_ptr<TCPSocketHandler> tcp_handler_;
+
     // ===================================================================== //
     // Functions
     // ===================================================================== //  
@@ -85,6 +95,17 @@ private:
      */  
     void setupPubSub();
 
+    /**
+     * @brief something here
+     */ 
+    void setupTCP();
+
+    void closeSonar();
+
+    void waitForConnections();
+
+    void initializeSonarParams();
+    
     /**
      * @brief something here
      */  
@@ -103,5 +124,10 @@ private:
      * @brief something here
      */  
     void disconnectTimerCallback();
+
+    void callbackBathty(norbit_types::BathymetricData data);
+
+    void callbackWC(norbit_types::WaterColumnData data);
+
 };
 
