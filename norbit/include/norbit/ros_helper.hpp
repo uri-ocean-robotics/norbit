@@ -5,7 +5,12 @@
 #include <rclcpp/rclcpp.hpp>
 #include "builtin_interfaces/msg/time.hpp"
 
-// double time to stamp (builtin_interfaces::msg::Time)
+
+/**
+ * @brief Convert double timestamp to ROS header timestamp
+ * @param[in] time_in_seconds The time in double
+ * @return Header stamp in builtin_interfaces::msg::Time
+ */ 
 inline builtin_interfaces::msg::Time doubleToRosStamp(double time_in_seconds) {
     builtin_interfaces::msg::Time stamp;
 
@@ -15,7 +20,21 @@ inline builtin_interfaces::msg::Time doubleToRosStamp(double time_in_seconds) {
     return stamp;
 }
 
-// boost time to stamp (builtin_interfaces::msg::Time)
+/**
+ * @brief Convert ROS header timestamp to a double format timestamp
+ * @param[in] stamp The time from header stamp
+ * @return The double format time 
+ */
+inline double stampTodouble(const builtin_interfaces::msg::Time& stamp) {
+    // Combine the seconds and nanoseconds into a single double
+    return static_cast<double>(stamp.sec) + static_cast<double>(stamp.nanosec) * 1e-9;
+}
+
+/**
+ * @brief Convert boost timestamp to ROS header timestamp
+ * @param[in] pt The time in boost format
+ * @return Header stamp in builtin_interfaces::msg::Time
+ */ 
 inline builtin_interfaces::msg::Time boostToRosStamp(const boost::posix_time::ptime& pt) {
     // Define the UNIX epoch as a boost::ptime
     static const boost::posix_time::ptime epoch(
@@ -31,7 +50,12 @@ inline builtin_interfaces::msg::Time boostToRosStamp(const boost::posix_time::pt
     return stamp;
 }
 
-// returns duration in seconds as double from two stamp (builtin_interfaces::msg::Time)
+/**
+ * @brief Convert two header stamp to a double format duration
+ * @param[in] start The start time in Header stamp, which is builtin_interfaces::msg::Time
+ * @param[in] end The end time in Header stamp, which is builtin_interfaces::msg::Time
+ * @return The double format time duration 
+ */ 
 inline double durationFromStamp(
     const builtin_interfaces::msg::Time& start,
     const builtin_interfaces::msg::Time& end)
@@ -41,9 +65,4 @@ inline double durationFromStamp(
 
     rclcpp::Duration duration = t_end - t_start;
     return duration.seconds();  
-}
-
-inline double stampTodouble(const builtin_interfaces::msg::Time& stamp) {
-    // Combine the seconds and nanoseconds into a single double
-    return static_cast<double>(stamp.sec) + static_cast<double>(stamp.nanosec) * 1e-9;
 }

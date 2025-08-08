@@ -48,10 +48,11 @@ private:
     //! TODO: make the param struct simpler: ros param and TCP param 
     ConnectionParams params_;
 
+    //! Buffer for received data from CMD response
     boost::asio::streambuf cmd_resp_buffer_;
     
+    //! The CMD response string
     std::deque<std::string> cmd_resp_queue_;
-
 
     /**
      * @brief Sets up a callback to receive the raw binary UDP socket data

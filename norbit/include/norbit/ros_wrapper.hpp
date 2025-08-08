@@ -25,10 +25,13 @@ class NorbitRos : public rclcpp::Node
 {
 public:
     /**
-     * @brief something here
+     * @brief Constructor
      */  
     NorbitRos();
 
+    /**
+     * @brief Destructor
+     */  
     ~NorbitRos();
 
 private:
@@ -86,47 +89,70 @@ private:
     // ===================================================================== //  
 
     /**
-     * @brief something here
+     * @brief Update the ROS parameters
      */  
     void updateParams();
 
     /**
-     * @brief something here
+     * @brief Setup ROS such as pub/sub/srv/timer...
      */  
-    void setupPubSub();
+    void setupROS();
 
     /**
-     * @brief something here
+     * @brief Setup TCP handler and callbacks
      */ 
     void setupTCP();
 
+    /**
+     * @brief Shutdown the sonar (i.e., close sonar power)
+     */     
     void closeSonar();
 
+    /**
+     * @brief Start the TCP, initialize the sonar
+     */      
     void waitForConnections();
 
+    /**
+     * @brief Sonar initialization: send param to sonar
+     */      
     void initializeSonarParams();
     
     /**
-     * @brief something here
+     * @brief ROS service for the CMD send to sonar
+     * @param req The request of this service
+     * @param resp The response of this service
+     * @return True: succ; False: failed
      */  
     bool norbitCmdCallback(
         const std::shared_ptr<norbit_msgs::srv::NorbitCmd::Request> req,
         const std::shared_ptr<norbit_msgs::srv::NorbitCmd::Response> resp);
 
     /**
-     * @brief something here
+     * @brief ROS service for the power setup CMD
+     * @param req The request of this service
+     * @param resp The response of this service
+     * @return True: succ; False: failed
      */  
     bool setPowerCallback(
         const std::shared_ptr<norbit_msgs::srv::SetPower::Request> req,
         const std::shared_ptr<norbit_msgs::srv::SetPower::Response> resp);
 
     /**
-     * @brief something here
+     * @brief Restart the sonar connection
      */  
     void disconnectTimerCallback();
 
+    /**
+     * @brief The bathmetry callback from TCP handler
+     * @param data The parsed norbit bathymetric data
+     */      
     void callbackBathty(norbit_types::BathymetricData data);
 
+    /**
+     * @brief The water column callback from TCP handler
+     * @param data The parsed norbit water column data
+     */      
     void callbackWC(norbit_types::WaterColumnData data);
 
 };

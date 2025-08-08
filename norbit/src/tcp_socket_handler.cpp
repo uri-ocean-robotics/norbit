@@ -8,7 +8,7 @@ TCPSocketHandler::TCPSocketHandler(const ConnectionParams& params)
 
 TCPSocketHandler::~TCPSocketHandler()
 {
-    std::cout<<"~TCPSocketHandler called now\n";
+    // std::cout<<"~TCPSocketHandler called now\n";
     closeConnection();
 }
 
@@ -83,15 +83,15 @@ void TCPSocketHandler::setupConnection()
 
 void TCPSocketHandler::closeConnection()
 {
-    std::cout << "close start" << std::endl;
+    // std::cout << "close start" << std::endl;
 
-    std::cout << "stop the io..." << std::endl;
+    // std::cout << "stop the io..." << std::endl;
     // stop the io
     if (!io_context_.stopped()) {
         io_context_.stop();
     }
 
-    std::cout << "stop the thread..." << std::endl;
+    // std::cout << "stop the thread..." << std::endl;
     // stop the thread
     if (worker_thread_.joinable()) { 
         worker_thread_.join(); 
@@ -114,7 +114,7 @@ void TCPSocketHandler::closeConnection()
     close_socket("water_column", sockets_.water_column);
     close_socket("cmd", sockets_.cmd);
 
-    std::cout << "close end" << std::endl;
+    // std::cout << "close end" << std::endl;
 }
 
 void TCPSocketHandler::handleConnect(

@@ -10,7 +10,7 @@ NorbitRos::NorbitRos()
     updateParams();
 
     //! Setup ROS
-    setupPubSub();
+    setupROS();
 
     //! Setup TCP 
     setupTCP();
@@ -18,14 +18,12 @@ NorbitRos::NorbitRos()
 
 NorbitRos::~NorbitRos()
 {
-    std::cout<<"~NorbitRos  called now\n";
+    // std::cout<<"~NorbitRos  called now\n";
     closeSonar();
 }
 
 void NorbitRos::updateParams()
 {
-    //! TODO: remove those default value?
-
     //! SONAR param
     this->declare_parameter<std::string>("sensor_frame", DEFAULT_SENSOR_FRAME);
     this->get_parameter("sensor_frame", params_.sensor_frame);
@@ -145,7 +143,7 @@ void NorbitRos::updateParams()
     std::cout<<"\n";                    
 }
 
-void NorbitRos::setupPubSub()
+void NorbitRos::setupROS()
 {
     // ===================================================================== //
     // ros publishers
@@ -251,11 +249,11 @@ void NorbitRos::initializeSonarParams(){
 
 void NorbitRos::closeSonar()
 {
-    std::cout<<" closeSonar begin...\n";
+    // std::cout<<" closeSonar begin...\n";
     for (auto param : params_.shutdown_settings) {
         tcp_handler_->sendCmd(param.first, param.second);
     }
-    std::cout<<" closeSonar end...\n";
+    // std::cout<<" closeSonar end...\n";
 }
 
 void NorbitRos::callbackBathty(norbit_types::BathymetricData data) 
@@ -334,8 +332,8 @@ void NorbitRos::callbackWC(norbit_types::WaterColumnData data)
     }
 
     if(params_.pubMultibeamWC()){
-        marine_acoustic_msgs::msg::RawSonarImage::Ptr hydro_wc_msg(
-            new marine_acoustic_msgs::msg::RawSonarImage);
+        auto hydro_wc_msg = std::make_shared<marine_acoustic_msgs::msg::RawSonarImage>();
+
         norbit::conversions::norbitWC2RawSonarImage(norb_wc_msg, *hydro_wc_msg);
         wc_pub_->publish(*hydro_wc_msg);
     }
