@@ -164,7 +164,11 @@ void TCPSocketHandler::startStreamReceive(
 
 void TCPSocketHandler::startCmdReceive()
 {
-    boost::asio::async_read_until(*sockets_.cmd, cmd_resp_buffer_, "\r\n",
+    // Most commands are echoed with 0x0d 0x0a (\r\n), but
+    // set_ntp_server is termianted with 0x0a only.
+
+    // boost::asio::async_read_until(*sockets_.cmd, cmd_resp_buffer_, "\r\n",
+    boost::asio::async_read_until(*sockets_.cmd, cmd_resp_buffer_, "\n",
         [this](const boost::system::error_code& ec, std::size_t bytes_transferred) {
             if (!ec) {
                 // A complete line is in the buffer. Extract and process it.

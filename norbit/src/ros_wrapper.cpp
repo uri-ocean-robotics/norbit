@@ -154,7 +154,6 @@ void NorbitRos::setupPubSub()
     //! TODO: change to check if any subscription exists
 
     if (params_.pubPointcloud()){
-        //! TODO: use pcl::PointCloud<pcl::PointXYZI or PointCloud2
         cloud_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
             params_.pointcloud_topic, 1);
     }
