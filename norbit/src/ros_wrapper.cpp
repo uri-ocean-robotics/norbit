@@ -270,6 +270,7 @@ void NorbitRos::callbackBathty(norbit_types::BathymetricData data)
 
     if (params_.pubPointcloud()){
 
+            
         // fill up the pointcloud
         pcl::PointCloud<pcl::PointXYZI>::Ptr detections(
             new pcl::PointCloud<pcl::PointXYZI>);
@@ -296,6 +297,12 @@ void NorbitRos::callbackBathty(norbit_types::BathymetricData data)
         ros_cloud->header.stamp = stamp;
         ros_cloud->header.frame_id = params_.sensor_frame;
         cloud_pub_->publish(std::move(ros_cloud));
+
+        auto sys_time = this->now().seconds();
+        if(abs(data.bathymetricHeader().time-sys_time) > 10) {
+            RCLCPP_WARN(this->get_logger(), "Time sync failed: norbit time=%.9f, sys time=%.9f", 
+                data.bathymetricHeader().time, sys_time);
+        }
     }
 
     // ===================================================================== //
